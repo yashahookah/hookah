@@ -12,11 +12,37 @@ class TrendsAnalyzer:
     def __init__(self):
         self.keywords_categories = {
             'brands': [
-                # Основные российские бренды
-                'adalya', 'darkside', 'musthave', 'duft', 'blackburn', 'burn', 'satyr',
-                'element', 'holster', 'hit', 'h.i.t', 'h i t', 'hookain', 'sebero',
-                'karma', 'spectrum', 'overdose', 'overdoze', 'overdoz', 'overdose hookah',
-                'overdoze hookah', 'overdoz hookah',
+                # Основные российские бренды табака
+                'adalya', 'адалия', 'адалья',
+                'darkside', 'дарксайд', 'ds',
+                'musthave', 'мастхейв', 'мх',
+                'duft', 'дуфт',
+                'blackburn', 'блэкберн',
+                'burn', 'берн',
+                'satyr', 'сатир',
+                'element', 'элемент',
+                'holster', 'холстер',
+                'hit', 'h.i.t', 'h i t', 'хит',
+                'hookain', 'хукаин',
+                'sebero', 'себеро', 'sebero classic',
+                'karma', 'карма',
+                'spectrum', 'спектрум',
+                'overdose', 'overdoze', 'overdoz', 'овердоз',
+                'overdose hookah', 'overdoze hookah', 'overdoz hookah',
+                'jent', 'джент', 'jent cigar',
+                'nur', 'нур',
+                'sarma', 'сарма',
+                'edelveis', 'эдельвейс',
+                'nano smoke', 'нано смоук',
+                'big maks', 'биг макс',
+                'bonche', 'бонче',
+                'chabacco', 'чабакко',
+                'trofimoff', 'трофимов', 'трофимофф',
+                'werkbund', 'веркбунд',
+                'antagonist', 'антагонист',
+                'bezdna', 'бездна',
+                'big smoke', 'биг смоук',
+                'doha', 'доха',
                 
                 # Международные бренды табака
                 'tangiers', 'original by tangiers', 'obt', 'serbetli', 'al fakher', 'afzal',

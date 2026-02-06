@@ -60,10 +60,41 @@ class LearningSystem:
         if not text:
             return
         
-        # Извлечение информации о брендах
-        brands = ['adalya', 'serbetli', 'al fakher', 'darkside', 'musthave']
+        # Извлечение информации о брендах (полный список из исторических данных)
+        brands = [
+            # Российские бренды табака
+            'adalya', 'адалия', 'адалья', 'darkside', 'дарксайд', 'ds',
+            'musthave', 'мастхейв', 'мх', 'duft', 'дуфт', 'blackburn', 'блэкберн',
+            'burn', 'берн', 'satyr', 'сатир', 'element', 'элемент', 'holster', 'холстер',
+            'hit', 'h.i.t', 'h i t', 'хит', 'hookain', 'хукаин', 'sebero', 'себеро',
+            'sebero classic', 'karma', 'карма', 'spectrum', 'спектрум',
+            'overdose', 'overdoze', 'overdoz', 'овердоз', 'jent', 'джент', 'jent cigar',
+            'nur', 'нур', 'sarma', 'сарма', 'edelveis', 'эдельвейс', 'nano smoke',
+            'нано смоук', 'big maks', 'биг макс', 'bonche', 'бонче', 'chabacco', 'чабакко',
+            'trofimoff', 'трофимов', 'трофимофф', 'werkbund', 'веркбунд',
+            'antagonist', 'антагонист', 'bezdna', 'бездна', 'big smoke', 'биг смоук', 'doha', 'доха',
+            # Международные бренды табака
+            'tangiers', 'тангирс', 'тангиерс', 'original by tangiers', 'obt',
+            'serbetli', 'сербетли', 'al fakher', 'аль факхер', 'af', 'afzal', 'афзал',
+            'nakhla', 'нахла', 'starbuzz', 'старбазз', 'fumari', 'фумари', 'azure', 'азур',
+            'social smoke', 'сошиал смоук', 'zomo', 'зомо', 'trifecta', 'трифекта',
+            'ugly', 'агли', 'chaos', 'хаос', 'eternal smoke', 'этернал смоук',
+            'haze', 'хейз', 'hydro', 'хайдро', 'lavoo', 'лаву', 'mazaya', 'мазая',
+            'nirvana', 'нирвана', 'pure', 'пьюр',
+            # Бренды кальянов и аксессуаров
+            'alpha hookah', 'альфа кальян', 'amy deluxe', 'amira', 'b2 hookah',
+            'dsh hookah', 'dsh кальян', 'дш кальян', 'kaloud', 'калуд', 'mig', 'миг',
+            'mig hookah', 'mig кальян', 'moze', 'мозе', 'moze hookah', 'moze кальян',
+            'oduman', 'одуман', 'regal hookah', 'shishabucks', 'starbuzz hookah',
+            'union hookah', 'union', 'юнион кальян', 'wookah', 'aeon', 'эон',
+            'mason', 'мейсон', 'hookah john', 'hoob', 'хуб', 'cosmobowl', 'космобоул',
+            'kaloud lotus', 'lotus', 'лотос', 'provost', 'stratus', 'samsaris',
+            'vitria', 'ignis', 'hmd', 'heat management'
+        ]
         for brand in brands:
-            if brand in text:
+            # Используем границы слов для точного поиска
+            pattern = r'\b' + re.escape(brand) + r'\b'
+            if re.search(pattern, text, re.IGNORECASE):
                 if brand not in self.knowledge_base['brands']:
                     self.knowledge_base['brands'][brand] = {
                         'mentions': 0,

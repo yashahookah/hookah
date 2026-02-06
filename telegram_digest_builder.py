@@ -116,6 +116,8 @@ class DigestBuilder:
             "ignis", "игнис",
             "hmd", "хмд",
             "heat management", "heat management device",
+            "hoob", "хуб",
+            "cosmobowl", "космобоул",
         ]
 
         # Паттерны для поиска цен

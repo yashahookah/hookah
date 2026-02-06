@@ -59,14 +59,14 @@ class TrendsAnalyzer:
                 'stratus', 'samsaris', 'vitria', 'ignis', 'hmd', 'heat management',
                 
                 # Российские производители кальянов
-                'dsh', 'dsh hookah', 'dsh кальян', 'mig', 'mig hookah', 'mig кальян',
-                'moze', 'moze hookah', 'moze кальян', 'union', 'union hookah',
-                'aeon', 'aeon hookah', 'mason', 'mason hookah',
-                
-                # Другие популярные бренды
-                'fumari', 'azure', 'chaos', 'eternal smoke', 'haze', 'hydro',
-                'lavoo', 'mazaya', 'nirvana', 'pure', 'social smoke', 'trifecta',
-                'ugly', 'zomo', 'adalya', 'serbetli', 'al fakher', 'afzal', 'nakhla',
+                'dsh', 'dsh hookah', 'dsh кальян', 'дш кальян',
+                'mig', 'mig hookah', 'mig кальян', 'миг',
+                'moze', 'moze hookah', 'moze кальян', 'мозе',
+                'union', 'union hookah', 'юнион кальян',
+                'aeon', 'aeon hookah', 'эон',
+                'mason', 'mason hookah', 'мейсон',
+                'hoob', 'хуб',
+                'cosmobowl', 'космобоул',
             ],
             'products': ['табак', 'уголь', 'кальян', 'чаша', 'шланг', 'мундштук', 'колба', 
                         'hookah', 'shisha', 'tobacco', 'coals', 'bowl', 'hose'],

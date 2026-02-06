@@ -33,6 +33,22 @@ jobs:
           if-no-files-found: ignore
         continue-on-error: true
       
+      - name: Check secrets availability
+        run: |
+          echo "Проверка секретов..."
+          if [ -z "${{ secrets.TELEGRAM_API_ID }}" ]; then
+            echo "❌ TELEGRAM_API_ID не установлен в секретах"
+            exit 1
+          else
+            echo "✅ TELEGRAM_API_ID найден в секретах"
+          fi
+          if [ -z "${{ secrets.TELEGRAM_API_HASH }}" ]; then
+            echo "❌ TELEGRAM_API_HASH не установлен в секретах"
+            exit 1
+          else
+            echo "✅ TELEGRAM_API_HASH найден в секретах"
+          fi
+      
       - name: Run Telegram Analytics
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
@@ -41,6 +57,11 @@ jobs:
           echo "Проверка переменных окружения..."
           echo "API_ID установлен: $([ -n "$TELEGRAM_API_ID" ] && echo 'да' || echo 'нет')"
           echo "API_HASH установлен: $([ -n "$TELEGRAM_API_HASH" ] && echo 'да' || echo 'нет')"
+          if [ -z "$TELEGRAM_API_ID" ] || [ -z "$TELEGRAM_API_HASH" ]; then
+            echo "❌ Переменные окружения не установлены!"
+            echo "Проверь секреты в Settings → Secrets → Actions"
+            exit 1
+          fi
           python3 telegram_daily_summary_complete.py --test
         continue-on-error: true
       

@@ -1,0 +1,47 @@
+# Telegram session files
+*.session
+*.session-journal
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+telegram_summary.log
+telegram_summary_error.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Data files (содержат чувствительные данные)
+knowledge_base.json
+brand_mentions.json
+analytics_data.json
+trending_topics.json
+
+# Summaries (опционально - можно включить в git для истории)
+# summaries/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.bak

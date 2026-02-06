@@ -38,6 +38,9 @@ jobs:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
         run: |
+          echo "Проверка переменных окружения..."
+          echo "API_ID установлен: $([ -n "$TELEGRAM_API_ID" ] && echo 'да' || echo 'нет')"
+          echo "API_HASH установлен: $([ -n "$TELEGRAM_API_HASH" ] && echo 'да' || echo 'нет')"
           python3 telegram_daily_summary_complete.py --test
         continue-on-error: true
       

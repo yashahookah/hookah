@@ -37,7 +37,7 @@ class TrendsAnalyzer:
                 'big maks', 'биг макс',
                 'bonche', 'бонче',
                 'chabacco', 'чабакко',
-                'trofimoff', 'трофимов', 'трофимофф',
+                'trofimoff', 'трофимов', 'трофимофф', "troffimov's", "troffimov", "trofimoff's", "трофимова",
                 'werkbund', 'веркбунд',
                 'antagonist', 'антагонист',
                 'bezdna', 'бездна',
@@ -68,8 +68,19 @@ class TrendsAnalyzer:
                 'hoob', 'хуб',
                 'cosmobowl', 'космобоул',
             ],
-            'products': ['табак', 'уголь', 'кальян', 'чаша', 'шланг', 'мундштук', 'колба', 
-                        'hookah', 'shisha', 'tobacco', 'coals', 'bowl', 'hose'],
+            # Продукты - конкретные названия, а не общие категории
+            # Исключаем общие слова типа "кальян", "табак" - они не являются продуктами
+            'products': [
+                # Конкретные модели и названия продуктов
+                'lotus', 'provost', 'stratus', 'samsaris', 'vitria', 'ignis', 'hmd',
+                'kaloud lotus', 'kaloud provost', 'kaloud stratus',
+                'aluminum foil', 'фольга', 'foil',
+                'кокосовый уголь', 'coconut coals', 'coco coals',
+                # Конкретные модели кальянов (если упоминаются по названию)
+                'alpha', 'amy', 'amira', 'b2', 'oduman', 'regal', 'wookah', 'aeon', 'mason',
+                # Конкретные аксессуары по названию
+                'vase', 'base', 'stem', 'downstem', 'tray', 'grommet',
+            ],
             'flavors': ['яблоко', 'мята', 'арбуз', 'дыня', 'манго', 'клубника', 'вишня', 
                        'персик', 'лимон', 'лайм', 'кола', 'карамель', 'ваниль', 'шоколад',
                        'apple', 'mint', 'watermelon', 'melon', 'mango', 'strawberry'],
@@ -105,15 +116,28 @@ class TrendsAnalyzer:
         text_lower = text.lower()
         found_keywords = []
         
+        # Слова из названий каналов, которые не должны считаться брендами
+        channel_words = ['live', 'expert', 'professional', 'group', 'crew', 'trip', 'says', 
+                        'hookah', 'russian', 'smoky', 'big', 'smoke', 'kn', 'mt', 'mveche',
+                        'fedotov', 'savinov', 'ivan', 'kalyan']
+        
         # Поиск по известным брендам
         for category, keywords in self.keywords_categories.items():
             for keyword in keywords:
+                # Пропускаем слова из названий каналов для категории brands
+                if category == 'brands' and keyword.lower() in channel_words:
+                    continue
                 # Используем границы слов для точного поиска
                 pattern = r'\b' + re.escape(keyword) + r'\b'
                 if re.search(pattern, text_lower):
                     found_keywords.append((category, keyword))
         
         # Дополнительный поиск брендов по паттернам (заглавные буквы, аббревиатуры)
+        # Исключаем слова из названий каналов и общие слова
+        exclude_words = ['the', 'and', 'or', 'for', 'with', 'this', 'that', 'from', 'into',
+                        'hookah', 'shisha', 'tobacco', 'coals', 'bowl', 'hose', 'review',
+                        'master', 'expert', 'обзор', 'мастер', 'эксперт']
+        
         brand_patterns = [
             r'\b[A-Z]{2,}\b',  # Аббревиатуры типа HIT, OBT, DS
             r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b',  # Названия типа "Original By Tangiers"
@@ -123,9 +147,10 @@ class TrendsAnalyzer:
             matches = re.finditer(pattern, text)
             for match in matches:
                 potential_brand = match.group().lower()
-                # Исключаем общие слова
-                exclude_words = ['the', 'and', 'or', 'for', 'with', 'this', 'that', 'from', 'into']
-                if potential_brand not in exclude_words and len(potential_brand) >= 2:
+                # Исключаем общие слова и слова из названий каналов
+                if (potential_brand not in exclude_words and 
+                    potential_brand not in channel_words and 
+                    len(potential_brand) >= 2):
                     # Проверяем, не найден ли уже этот бренд
                     if not any(kw[1] == potential_brand for kw in found_keywords if kw[0] == 'brands'):
                         found_keywords.append(('brands', potential_brand))
@@ -141,6 +166,11 @@ class TrendsAnalyzer:
         event_mentions = []
         business_mentions = []
         
+        # Слова из названий каналов, которые не должны считаться брендами
+        channel_words = ['live', 'expert', 'professional', 'group', 'crew', 'trip', 'says', 
+                        'hookah', 'russian', 'smoky', 'big', 'smoke', 'kn', 'mt', 'mveche',
+                        'fedotov', 'savinov', 'ivan', 'kalyan']
+        
         for channel_name, messages in messages_by_channel.items():
             for msg in messages:
                 text = msg.get('text', '')
@@ -153,8 +183,13 @@ class TrendsAnalyzer:
                 # Подсчет упоминаний
                 for category, keyword in keywords:
                     if category == 'brands':
-                        brand_mentions[keyword] += 1
+                        # Нормализуем название бренда (приводим к единому виду)
+                        normalized_brand = keyword.lower().strip()
+                        # Пропускаем если это слово из названия канала
+                        if normalized_brand not in channel_words:
+                            brand_mentions[normalized_brand] += 1
                     elif category == 'products':
+                        # Продукты считаем только если это конкретные названия
                         product_mentions[keyword] += 1
                     elif category == 'flavors':
                         flavor_mentions[keyword] += 1
@@ -172,8 +207,19 @@ class TrendsAnalyzer:
                         })
         
         # Определяем топ-тренды
-        top_brands = brand_mentions.most_common(5)
-        top_products = product_mentions.most_common(5)
+        # Фильтруем бренды - убираем слова из названий каналов
+        filtered_brands = {k: v for k, v in brand_mentions.items() 
+                          if k.lower() not in channel_words}
+        top_brands = Counter(filtered_brands).most_common(10)
+        
+        # Фильтруем продукты - исключаем общие категории
+        # Общие слова, которые не являются конкретными продуктами
+        general_product_words = ['табак', 'tobacco', 'кальян', 'hookah', 'shisha', 
+                                'уголь', 'coals', 'чаша', 'bowl', 'шланг', 'hose',
+                                'мундштук', 'колба', 'vase', 'base']
+        filtered_products = {k: v for k, v in product_mentions.items() 
+                            if k.lower() not in general_product_words}
+        top_products = Counter(filtered_products).most_common(10) if filtered_products else []
         top_flavors = flavor_mentions.most_common(5)
         
         # Сохраняем тренды

@@ -384,10 +384,17 @@ class AnalyticsEngine:
                     )
 
                 if products:
-                    products_list = [f"**{p.title()}** ({c})" for p, c in products[:5]]
-                    report_lines.append(
-                        f"**Продукты:** {', '.join(products_list)}.\n\n"
-                    )
+                    # Фильтруем общие категории - показываем только конкретные продукты
+                    general_words = ['табак', 'tobacco', 'кальян', 'hookah', 'shisha', 
+                                   'уголь', 'coals', 'чаша', 'bowl', 'шланг', 'hose',
+                                   'мундштук', 'колба', 'vase', 'base']
+                    filtered_products = [(p, c) for p, c in products 
+                                      if p.lower() not in general_words]
+                    if filtered_products:
+                        products_list = [f"**{p.title()}** ({c})" for p, c in filtered_products[:5]]
+                        report_lines.append(
+                            f"**Продукты:** {', '.join(products_list)}.\n\n"
+                        )
 
                 if flavors:
                     flavors_list = [f"**{f.title()}** ({c})" for f, c in flavors[:5]]

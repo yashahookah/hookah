@@ -30,7 +30,7 @@ jobs:
           python3 github_actions_fix.py
       
       - name: Upload session file
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: telegram-session
           path: telegram_summary_session.session

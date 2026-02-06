@@ -26,7 +26,7 @@ jobs:
           pip install -r requirements_telegram.txt
       
       - name: Download session file (if exists)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: telegram-session
           path: .
@@ -43,7 +43,7 @@ jobs:
       
       - name: Save session file
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: telegram-session
           path: telegram_summary_session.session
@@ -53,7 +53,7 @@ jobs:
       
       - name: Upload summary files
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: summary-files
           path: |

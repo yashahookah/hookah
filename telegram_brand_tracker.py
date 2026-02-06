@@ -183,45 +183,80 @@ class BrandTracker:
         }
     
     def format_brand_mentions_summary(self, mentions_data):
-        """Форматирует сводку по упоминаниям брендов"""
-        summary = "🏷️ **ОТСЛЕЖИВАНИЕ БРЕНДОВ**\n\n"
+        """Форматирует сводку по упоминаниям брендов в читаемом формате"""
+        summary = "## 🎯 Фокус: Adalya и Tangiers\n\n"
         
-        # Adalya
-        if mentions_data['adalya']:
-            summary += f"📢 **ADALYA** ({len(mentions_data['adalya'])} упоминаний сегодня)\n\n"
+        total_adalya = len(mentions_data['adalya'])
+        total_tangiers = len(mentions_data['tangiers'])
+        
+        # Если нет упоминаний
+        if total_adalya == 0 and total_tangiers == 0:
+            summary += "Сегодня в лентах не было упоминаний **Adalya** и **Tangiers**. "
+            summary += "Возможно, все внимание было сосредоточено на других брендах или событиях.\n"
+            return summary
+        
+        # Adalya — более читаемо
+        if total_adalya > 0:
+            summary += f"**Adalya** упоминалась **{total_adalya} раз** за сегодня.\n\n"
             
             # Группируем по каналам
             by_channel = defaultdict(list)
             for mention in mentions_data['adalya']:
                 by_channel[mention['channel']].append(mention)
             
-            for channel, channel_mentions in by_channel.items():
-                summary += f"  📡 **{channel}** ({len(channel_mentions)} упоминаний):\n\n"
-                for mention in channel_mentions[:3]:  # Показываем до 3 примеров
-                    summary += f"    • {mention['time']}: {mention['context'][:80]}...\n"
-                if len(channel_mentions) > 3:
-                    summary += f"    ... и еще {len(channel_mentions) - 3} упоминаний\n"
-                summary += "\n"
+            if len(by_channel) == 1:
+                channel, mentions = list(by_channel.items())[0]
+                summary += f"Все упоминания были в канале **{channel}**.\n\n"
+            else:
+                summary += f"Упоминания распределены по {len(by_channel)} каналам: "
+                channels_list = [f"**{ch}** ({len(msgs)})" for ch, msgs in by_channel.items()]
+                summary += ", ".join(channels_list) + ".\n\n"
+            
+            # Показываем примеры
+            if total_adalya <= 3:
+                summary += "**Примеры упоминаний:**\n\n"
+                for mention in mentions_data['adalya'][:3]:
+                    context = mention['context'][:100].strip()
+                    summary += f"• [{mention['channel']}, {mention['time']}] {context}...\n\n"
+            else:
+                summary += f"**Примеры:**\n\n"
+                for mention in mentions_data['adalya'][:2]:
+                    context = mention['context'][:100].strip()
+                    summary += f"• [{mention['channel']}, {mention['time']}] {context}...\n\n"
+                summary += f"_... и еще {total_adalya - 2} упоминаний_\n\n"
         else:
-            summary += "📢 **ADALYA**: Нет упоминаний за сегодня\n\n"
+            summary += "**Adalya** сегодня не упоминалась.\n\n"
         
-        # Tangiers
-        if mentions_data['tangiers']:
-            summary += f"📢 **TANGIERS** ({len(mentions_data['tangiers'])} упоминаний сегодня)\n\n"
+        # Tangiers — более читаемо
+        if total_tangiers > 0:
+            summary += f"**Tangiers** упоминался **{total_tangiers} раз** за сегодня.\n\n"
             
             # Группируем по каналам
             by_channel = defaultdict(list)
             for mention in mentions_data['tangiers']:
                 by_channel[mention['channel']].append(mention)
             
-            for channel, channel_mentions in by_channel.items():
-                summary += f"  📡 **{channel}** ({len(channel_mentions)} упоминаний):\n\n"
-                for mention in channel_mentions[:3]:
-                    summary += f"    • {mention['time']}: {mention['context'][:80]}...\n"
-                if len(channel_mentions) > 3:
-                    summary += f"    ... и еще {len(channel_mentions) - 3} упоминаний\n"
-                summary += "\n"
+            if len(by_channel) == 1:
+                channel, mentions = list(by_channel.items())[0]
+                summary += f"Все упоминания были в канале **{channel}**.\n\n"
+            else:
+                summary += f"Упоминания распределены по {len(by_channel)} каналам: "
+                channels_list = [f"**{ch}** ({len(msgs)})" for ch, msgs in by_channel.items()]
+                summary += ", ".join(channels_list) + ".\n\n"
+            
+            # Показываем примеры
+            if total_tangiers <= 3:
+                summary += "**Примеры упоминаний:**\n\n"
+                for mention in mentions_data['tangiers'][:3]:
+                    context = mention['context'][:100].strip()
+                    summary += f"• [{mention['channel']}, {mention['time']}] {context}...\n\n"
+            else:
+                summary += f"**Примеры:**\n\n"
+                for mention in mentions_data['tangiers'][:2]:
+                    context = mention['context'][:100].strip()
+                    summary += f"• [{mention['channel']}, {mention['time']}] {context}...\n\n"
+                summary += f"_... и еще {total_tangiers - 2} упоминаний_\n\n"
         else:
-            summary += "📢 **TANGIERS**: Нет упоминаний за сегодня\n\n"
+            summary += "**Tangiers** сегодня не упоминался.\n\n"
         
         return summary

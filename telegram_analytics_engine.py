@@ -245,108 +245,120 @@ class AnalyticsEngine:
         return insights
     
     def format_analytics_report(self, content_analysis, sentiment_analysis, insights, brand_mentions, trends_data=None):
-        """Форматирует красивый, легко читаемый аналитический отчет (markdown)"""
+        """Форматирует красивый, легко читаемый аналитический отчет в стиле лонгрида"""
         report_lines = []
-
-        # Краткий вывод (самое важное сверху, в виде нормального текста)
-        report_lines.append("## 🧾 Краткий вывод\n")
 
         total_msgs = content_analysis.get('total_messages', 0)
 
-        # Отдельный сценарий: за период не было новых постов
+        # Краткий вывод — живой нарративный текст
+        report_lines.append("## 📖 Что происходило сегодня\n\n")
+
         if total_msgs == 0:
             report_lines.append(
-                "За выбранный период в отслеживаемых каналах не было новых постов.\n\n"
-                "Ниже — обзор рынка, брендов и цен, основанный на накопленных данных за более длинный период."
+                "Сегодня в отслеживаемых каналах было тихо — новых постов не появилось.\n\n"
+                "Но это не значит, что рынок стоит на месте. Ниже — обзор того, что происходит "
+                "в кальянной индустрии на основе накопленных данных за последний период."
             )
         else:
-            # Попробуем собрать небольшой «обзор дня» в пару предложений
-            summary_sentences = []
-
-            # 1) Используем инсайты (активность, вовлечённость, тональность)
+            # Собираем живой рассказ о дне
+            story_parts = []
+            
+            # Начало истории
+            story_parts.append(f"За сегодня в кальянном инфополе появилось **{total_msgs} новых постов** из {len(content_analysis.get('channels_activity', {}))} каналов.")
+            
+            # Активность каналов
             if insights:
-                # Берём только самые базовые инсайты
                 activity = next((i for i in insights if i["type"] == "activity"), None)
-                engagement = next((i for i in insights if i["type"] == "engagement"), None)
-                sentiment_insight = next((i for i in insights if i["type"] == "sentiment"), None)
-
                 if activity:
-                    summary_sentences.append(
-                        f"По активности за период выделяется канал {activity['value']}."
-                    )
+                    channel_name = activity['value'].split('(')[0].strip()
+                    story_parts.append(f"Самым активным оказался канал **{channel_name}**.")
+            
+            # Вовлечённость
+            if insights:
+                engagement = next((i for i in insights if i["type"] == "engagement"), None)
                 if engagement:
-                    summary_sentences.append(
-                        f"Больше всего внимания аудитории собирает контент канала {engagement['value']}."
-                    )
-                if sentiment_insight:
-                    summary_sentences.append(
-                        f"В целом тон обсуждений — {sentiment_insight['value'].lower()}."
-                    )
-
-            # 2) Подсветим конкурентов по брендам (без Adalya и Tangiers)
+                    channel_name = engagement['value'].split('(')[0].strip()
+                    story_parts.append(f"А больше всего внимания аудитории собрал контент от **{channel_name}**.")
+            
+            # Бренды
             competitor_brands = []
             if trends_data and trends_data.get("top_brands"):
                 focus_brands = {"adalya", "tangiers"}
                 for brand, count in trends_data["top_brands"]:
                     if brand.lower() not in focus_brands:
                         competitor_brands.append((brand, count))
-
+            
             if competitor_brands:
-                top_competitors = ", ".join(
-                    [f"{b.title()} ({c})" for b, c in competitor_brands[:3]]
-                )
-                summary_sentences.append(
-                    f"Среди брендов в ленте чаще всего всплывали конкуренты: {top_competitors}."
-                )
+                top_3 = competitor_brands[:3]
+                brands_text = ", ".join([f"**{b.title()}**" for b, c in top_3])
+                story_parts.append(f"В лентах чаще всего мелькали бренды: {brands_text}.")
+            
+            # Тональность
+            if insights:
+                sentiment_insight = next((i for i in insights if i["type"] == "sentiment"), None)
+                if sentiment_insight:
+                    sentiment_text = sentiment_insight['value'].lower()
+                    story_parts.append(f"Общий настрой обсуждений — **{sentiment_text}**.")
+            
+            # Если ничего не собрали
+            if not story_parts:
+                story_parts.append("Активность распределена равномерно — никаких ярких всплесков не наблюдалось.")
+            
+            # Объединяем в читаемый текст
+            report_lines.append(" ".join(story_parts) + "\n")
 
-            # Если ничего осмысленного не собрали — fallback
-            if not summary_sentences:
-                report_lines.append(
-                    "За период нет ярко выраженных всплесков активности — обсуждения распределены достаточно ровно."
-                )
-            else:
-                # Разбиваем на абзацы для читаемости
-                report_lines.append("\n\n".join(summary_sentences))
-
-        # Ключевые метрики
-        report_lines.append("\n\n---\n\n")
-        report_lines.append("## 📈 Ключевые метрики\n\n")
-        report_lines.append(f"- **Сообщений**: {content_analysis.get('total_messages', 0)}\n")
-        report_lines.append(f"- **Просмотров всего**: {content_analysis.get('total_views', 0):,}\n")
-        report_lines.append(
-            f"- **Среднее просмотров на пост**: {content_analysis.get('avg_views_per_message', 0):.1f}\n"
-        )
-        report_lines.append(
-            f"- **Доля медиа‑контента**: {content_analysis.get('media_ratio', 0) * 100:.1f}%"
-        )
-
-        # Активность по каналам
-        if content_analysis.get('channels_activity'):
+        # Ключевые метрики — более читаемо
+        if total_msgs > 0:
             report_lines.append("\n\n---\n\n")
-            report_lines.append("## 📡 Активность по каналам\n\n")
+            report_lines.append("## 📊 В цифрах\n\n")
+            
+            total_views = content_analysis.get('total_views', 0)
+            avg_views = content_analysis.get('avg_views_per_message', 0)
+            media_ratio = content_analysis.get('media_ratio', 0) * 100
+            
+            report_lines.append(
+                f"Всего собрано **{total_msgs} постов**, которые набрали **{total_views:,} просмотров**. "
+                f"В среднем каждый пост получил **{avg_views:.0f} просмотров**.\n\n"
+            )
+            
+            if media_ratio > 0:
+                report_lines.append(
+                    f"**{media_ratio:.0f}%** контента — это фото и видео, остальное — текстовые посты.\n"
+                )
+
+        # Активность по каналам — более читаемо
+        if content_analysis.get('channels_activity') and total_msgs > 0:
+            report_lines.append("\n\n---\n\n")
+            report_lines.append("## 📱 Кто и как писал\n\n")
+            
             sorted_channels = sorted(
                 content_analysis['channels_activity'].items(),
                 key=lambda x: x[1]['messages'],
                 reverse=True,
             )
-            for channel, stats in sorted_channels:
-                line = (
-                    f"- **{channel}**: "
-                    f"{stats['messages']} постов, "
-                    f"среднее {stats['avg_views']:.0f} просмотров, "
-                    f"медиа: {stats['media_count']} шт.\n"
-                )
-                report_lines.append(line)
-            report_lines.append("")  # Пустая строка в конце списка
+            
+            for idx, (channel, stats) in enumerate(sorted_channels, 1):
+                if stats['messages'] > 0:
+                    # Более живое описание
+                    media_info = f", из них {stats['media_count']} с фото/видео" if stats['media_count'] > 0 else ""
+                    line = (
+                        f"**{idx}. {channel}** опубликовал {stats['messages']} постов{media_info}. "
+                        f"Средняя вовлечённость — {stats['avg_views']:.0f} просмотров на пост.\n\n"
+                    )
+                    report_lines.append(line)
 
-        # Популярные темы (о чем в целом говорят)
-        if content_analysis.get('topics'):
+        # Популярные темы — более читаемо
+        if content_analysis.get('topics') and total_msgs > 0:
             report_lines.append("\n---\n\n")
-            report_lines.append("## 🏷️ О чём говорят\n\n")
+            report_lines.append("## 💬 О чём говорили\n\n")
+            
             top_topics = content_analysis['topics'].most_common(5)
+            topics_list = []
             for topic, count in top_topics:
-                report_lines.append(f"- **{topic}**: {count} упоминаний\n")
-            report_lines.append("")  # Пустая строка в конце списка
+                topics_list.append(f"**{topic}** ({count} раз)")
+            
+            if topics_list:
+                report_lines.append("Основные темы дня: " + ", ".join(topics_list) + ".\n")
 
         # Новинки, продукты, вкусы (по трендам) — общий рынок, без фокуса на Adalya/Tangiers
         if trends_data:
@@ -357,57 +369,70 @@ class AnalyticsEngine:
             business_updates = trends_data.get("business_updates") or []
 
             if products or flavors or events or business_updates:
-                report_lines.append("\n---\n")
-                report_lines.append("## 🆕 Новинки, продукты и движ рынка\n")
+                report_lines.append("\n---\n\n")
+                report_lines.append("## 🎯 Что в тренде\n\n")
 
-                # Бренды‑лидеры дня (конкурентная картина, без Adalya/Tangiers)
+                # Бренды — более читаемо
                 focus_brands = {"adalya", "tangiers"}
                 competitor_brands = [
                     (b, c) for b, c in brands if b.lower() not in focus_brands
                 ]
                 if competitor_brands:
-                    report_lines.append("**Бренды, о которых говорили чаще всего (кроме Adalya/Tangiers):**\n")
-                    for brand, count in competitor_brands[:5]:
-                        report_lines.append(f"- {brand.title()} — {count} упоминаний\n")
-                    report_lines.append("")
+                    top_brands_list = [f"**{b.title()}** ({c})" for b, c in competitor_brands[:5]]
+                    report_lines.append(
+                        f"**Бренды дня:** {', '.join(top_brands_list)}.\n\n"
+                    )
 
                 if products:
-                    report_lines.append("**Продукты/категории, которые чаще всего всплывали:**\n")
-                    for product, count in products[:5]:
-                        report_lines.append(f"- {product.title()} — {count} упоминаний\n")
-                    report_lines.append("")
+                    products_list = [f"**{p.title()}** ({c})" for p, c in products[:5]]
+                    report_lines.append(
+                        f"**Продукты:** {', '.join(products_list)}.\n\n"
+                    )
 
                 if flavors:
-                    report_lines.append("**Вкусы и сочетания, о которых писали чаще всего:**\n")
-                    for flavor, count in flavors[:5]:
-                        report_lines.append(f"- {flavor.title()} — {count} упоминаний\n")
-                    report_lines.append("")
+                    flavors_list = [f"**{f.title()}** ({c})" for f, c in flavors[:5]]
+                    report_lines.append(
+                        f"**Вкусы:** {', '.join(flavors_list)}.\n\n"
+                    )
 
                 if events:
-                    report_lines.append("**События и активность:**\n")
-                    for ev in events:
-                        report_lines.append(f"- [{ev['channel']}] {ev['text']}\n")
+                    report_lines.append("**События и мероприятия:**\n\n")
+                    for ev in events[:3]:
+                        ev_text = ev['text'][:120].strip()
+                        if len(ev['text']) > 120:
+                            ev_text += "..."
+                        report_lines.append(f"• [{ev['channel']}] {ev_text}\n")
                     report_lines.append("")
 
                 if business_updates:
-                    report_lines.append("**Бизнес‑обновления (акции, новинки, запуски):**\n")
-                    for bu in business_updates:
-                        report_lines.append(f"- [{bu['channel']}] {bu['text']}\n")
+                    report_lines.append("**Бизнес-новости:**\n\n")
+                    for bu in business_updates[:3]:
+                        bu_text = bu['text'][:120].strip()
+                        if len(bu['text']) > 120:
+                            bu_text += "..."
+                        report_lines.append(f"• [{bu['channel']}] {bu_text}\n")
                     report_lines.append("")
 
-        # Тональность
-        if sentiment_analysis:
-            report_lines.append("\n---\n")
-            report_lines.append("## 😊 Тональность обсуждений\n")
+        # Тональность — более читаемо
+        if sentiment_analysis and total_msgs > 0:
+            report_lines.append("\n---\n\n")
+            report_lines.append("## 😊 Настроение аудитории\n\n")
+            
             total = sum(sentiment_analysis.values())
+            sentiment_parts = []
+            
             for sentiment, count in sentiment_analysis.items():
-                pct = (count / total * 100) if total > 0 else 0
-                label = {
-                    "positive": "Позитив",
-                    "negative": "Негатив",
-                    "neutral": "Нейтрально",
-                }.get(sentiment, sentiment)
-                report_lines.append(f"- **{label}**: {count} ({pct:.1f}%)")
+                if count > 0:
+                    pct = (count / total * 100) if total > 0 else 0
+                    label = {
+                        "positive": "позитивных",
+                        "negative": "негативных",
+                        "neutral": "нейтральных",
+                    }.get(sentiment, sentiment)
+                    sentiment_parts.append(f"**{pct:.0f}%** {label}")
+            
+            if sentiment_parts:
+                report_lines.append("Тон обсуждений: " + ", ".join(sentiment_parts) + ".\n")
 
         # Отдельный блок по брендам фокуса (Adalya / Tangiers)
         if brand_mentions:

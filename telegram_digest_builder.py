@@ -286,46 +286,63 @@ class DigestBuilder:
                     )
 
         lines: List[str] = []
-        lines.append("## 📌 Дайджест по конкретным постам\n")
+        lines.append("## 📌 Что конкретно писали блогеры\n\n")
 
-        # Новинки и релизы
+        # Новинки и релизы — более читаемо
         if novelties:
-            lines.append("### 🆕 Новинки и релизы\n\n")
-            # Сортируем по просмотрам
+            lines.append(f"### 🆕 Новинки и релизы ({len(novelties)} постов)\n\n")
             novelties_sorted = sorted(novelties, key=lambda x: x["views"], reverse=True)
-            for item in novelties_sorted[:10]:
-                brand_part = f"{item['brand']}: " if item["brand"] else ""
+            
+            for idx, item in enumerate(novelties_sorted[:8], 1):
+                brand_part = f"**{item['brand']}** представил: " if item["brand"] else ""
+                text_snippet = item['text'][:140].strip()
+                if len(item['text']) > 140:
+                    text_snippet += "..."
+                
                 lines.append(
-                    f"- [{item['channel']}] {item['time']} — {brand_part}{item['text']}\n"
+                    f"{idx}. [{item['channel']}, {item['time']}] {brand_part}{text_snippet}\n\n"
                 )
-            lines.append("")
+            if len(novelties) > 8:
+                lines.append(f"_... и еще {len(novelties) - 8} постов про новинки_\n\n")
 
-        # Мероприятия
+        # Мероприятия — более читаемо
         if events:
-            lines.append("### 🎪 Мероприятия и активность\n\n")
+            lines.append(f"### 🎪 Мероприятия и события ({len(events)} постов)\n\n")
             events_sorted = sorted(events, key=lambda x: x["views"], reverse=True)
-            for item in events_sorted[:10]:
-                date_part = f" ({item['date']})" if item["date"] else ""
+            
+            for idx, item in enumerate(events_sorted[:8], 1):
+                date_part = f" — **{item['date']}**" if item["date"] else ""
+                text_snippet = item['text'][:140].strip()
+                if len(item['text']) > 140:
+                    text_snippet += "..."
+                
                 lines.append(
-                    f"- [{item['channel']}] {item['time']}{date_part} — {item['text']}\n"
+                    f"{idx}. [{item['channel']}, {item['time']}]{date_part} {text_snippet}\n\n"
                 )
-            lines.append("")
+            if len(events) > 8:
+                lines.append(f"_... и еще {len(events) - 8} постов про события_\n\n")
 
-        # Цены и офферы
+        # Цены и офферы — более читаемо
         if prices:
-            lines.append("### 💸 Цены и офферы\n\n")
+            lines.append(f"### 💰 Цены и предложения ({len(prices)} постов)\n\n")
             prices_sorted = sorted(prices, key=lambda x: x["views"], reverse=True)
-            for item in prices_sorted[:10]:
-                brand_part = f"{item['brand']} " if item["brand"] else ""
+            
+            for idx, item in enumerate(prices_sorted[:8], 1):
+                brand_part = f"**{item['brand']}** " if item["brand"] else ""
                 product_part = f"{item['product']} " if item["product"] else ""
-                # Берём уникальные цены
                 uniq_prices = sorted(set(item["prices"]))
-                price_str = ", ".join(f"{p}₽" for p in uniq_prices[:3])
+                price_str = ", ".join(f"**{p}₽**" for p in uniq_prices[:3])
                 extra = "…" if len(uniq_prices) > 3 else ""
+                
+                text_snippet = item['text'][:100].strip()
+                if len(item['text']) > 100:
+                    text_snippet += "..."
+                
                 lines.append(
-                    f"- [{item['channel']}] {item['time']} — {brand_part}{product_part}за {price_str}{extra}. {item['text']}\n"
+                    f"{idx}. [{item['channel']}, {item['time']}] {brand_part}{product_part}— {price_str}{extra}. {text_snippet}\n\n"
                 )
-            lines.append("")
+            if len(prices) > 8:
+                lines.append(f"_... и еще {len(prices) - 8} постов с ценами_\n\n")
 
         # Если ничего не нашли — не засоряем отчёт
         useful_sections = any([novelties, events, prices])

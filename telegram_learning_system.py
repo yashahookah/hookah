@@ -153,13 +153,11 @@ class LearningSystem:
                 self.knowledge_base['trends'] = self.knowledge_base['trends'][-500:]
     
     def get_market_insights(self):
-        """Получает инсайты о рынке на основе накопленных знаний"""
+        """Получает инсайты о рынке на основе накопленных знаний в читаемом формате"""
         insights = []
         
-        # Анализ цен (упрощённо — без сложных средних)
+        # Анализ цен — более читаемо
         if self.knowledge_base['prices']:
-            insights.append("💰 **Ценообразование на рынке (по накопленным данным):**\n")
-            # Группируем близкие ключи вручную
             groups = {
                 'кальян': ['кальян'],
                 'табак': ['табак'],
@@ -168,53 +166,53 @@ class LearningSystem:
                 'уголь': ['уголь'],
             }
 
+            price_info = []
             for label, keys in groups.items():
                 all_prices = []
                 for key in keys:
                     all_prices.extend(self.knowledge_base['prices'].get(key, []))
-                # Фильтруем нули и совсем странные значения
                 all_prices = [p for p in all_prices if p > 0]
                 if not all_prices:
                     continue
 
                 min_price = min(all_prices)
                 max_price = max(all_prices)
-                # Берём «типовой уровень» как медиану
                 sorted_p = sorted(all_prices)
                 mid = len(sorted_p) // 2
                 median = (sorted_p[mid] if len(sorted_p) % 2 == 1 else (sorted_p[mid - 1] + sorted_p[mid]) / 2)
 
-                insights.append(
-                    f"  • {label}: чаще всего в районе ~{median:.0f}₽, диапазон от {min_price}₽ до {max_price}₽\n"
+                price_info.append(
+                    f"**{label}** — обычно **~{median:.0f}₽** (от {min_price}₽ до {max_price}₽)"
                 )
-            insights.append("")  # Пустая строка после блока цен
+            
+            if price_info:
+                insights.append("**Цены на рынке:** " + ", ".join(price_info) + ".\n\n")
         
-        # Анализ брендов
+        # Анализ брендов — более читаемо
         if self.knowledge_base['brands']:
-            insights.append("🏷️ **Активность брендов:**\n")
             sorted_brands = sorted(
                 self.knowledge_base['brands'].items(),
                 key=lambda x: x[1]['mentions'],
                 reverse=True
             )[:5]
-            for brand, data in sorted_brands:
-                insights.append(f"  • {brand.title()}: {data['mentions']} упоминаний\n")
-            insights.append("")  # Пустая строка после блока брендов
+            
+            brands_list = [f"**{brand.title()}** ({data['mentions']})" for brand, data in sorted_brands]
+            if brands_list:
+                insights.append("**Самые активные бренды:** " + ", ".join(brands_list) + ".\n\n")
         
-        # Ближайшие события
+        # Ближайшие события — более читаемо
         recent_events = [e for e in self.knowledge_base['events'] 
                         if datetime.fromisoformat(e['date']).date() >= datetime.now().date()]
         if recent_events:
-            insights.append("📅 **Ближайшие события:**\n")
+            insights.append("**Ближайшие события:**\n\n")
             for event in recent_events[:3]:
-                # Обрезаем текст и добавляем перенос строки
-                event_text = event['text'][:150].strip()
-                if len(event['text']) > 150:
+                event_text = event['text'][:120].strip()
+                if len(event['text']) > 120:
                     event_text += "..."
-                insights.append(f"  • [{event['channel']}] {event_text}\n")
-            insights.append("")  # Пустая строка после блока событий
+                insights.append(f"• [{event['channel']}] {event_text}\n")
+            insights.append("")
         
-        return "".join(insights) if insights else "Пока недостаточно данных для инсайтов"
+        return "".join(insights) if insights else "Пока недостаточно данных для инсайтов о рынке."
     
     def process_messages(self, messages_by_channel):
         """Обрабатывает все сообщения для обучения"""

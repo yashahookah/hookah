@@ -201,10 +201,10 @@ async def create_and_send_summary():
         date_str = now.strftime(SUMMARY_SETTINGS['date_format'])
         time_str = now.strftime('%H:%M')
         
-        # Заголовок аналитического отчета
-        full_summary = f"📊 **АНАЛИТИЧЕСКИЙ ОТЧЕТ ЗА {date_str}**\n"
-        full_summary += f"⏰ Время формирования: {time_str} МСК\n"
-        full_summary += "=" * 60 + "\n\n"
+        # Красивый заголовок отчета
+        full_summary = f"# 📊 Аналитический отчёт за {date_str}\n\n"
+        full_summary += f"_Сформировано в {time_str} МСК_\n\n"
+        full_summary += "---\n\n"
         
         # Собираем сообщения из всех активных каналов
         messages_by_channel = {}
@@ -258,31 +258,28 @@ async def create_and_send_summary():
         )
         full_summary += analytics_report
         
-        # Добавляем тренды, если есть
-        if trends_data:
-            trends_summary = trends_analyzer.format_trends_summary(trends_data)
-            full_summary += "\n" + trends_summary + "\n"
+        # Тренды уже интегрированы в analytics_report, пропускаем отдельный раздел
         
-        # Система обучения
+        # Система обучения — более читаемо
         if SUMMARY_SETTINGS.get('learning_enabled', True) and messages_by_channel:
             print("🧠 Обучение на основе контента...")
             learning_system.process_messages(messages_by_channel)
             market_insights = learning_system.get_market_insights()
             if market_insights:
-                full_summary += "\n" + "=" * 60 + "\n\n"
-                full_summary += "🧠 **ИНСАЙТЫ О РЫНКЕ**\n\n"
-                full_summary += market_insights + "\n\n"
+                full_summary += "\n---\n\n"
+                full_summary += "## 💡 Что мы знаем о рынке\n\n"
+                full_summary += market_insights + "\n"
         
         # Дайджест по конкретным постам (что именно писали блогеры)
         digest = digest_builder.build_digest(messages_by_channel)
         if digest:
-            full_summary += "\n" + "=" * 60 + "\n\n"
-            full_summary += digest + "\n"
+            full_summary += "\n---\n\n"
+            full_summary += digest
         
-        # Итоговая статистика
-        full_summary += "\n" + "=" * 60 + "\n\n"
-        full_summary += f"📈 **ИТОГО:** {total_messages} сообщений из {len(messages_by_channel)} каналов\n"
-        full_summary += f"📅 Дата: {date_str}\n"
+        # Итоговая статистика — более читаемо
+        if total_messages > 0:
+            full_summary += "\n---\n\n"
+            full_summary += f"**Итого:** проанализировано **{total_messages} сообщений** из **{len(messages_by_channel)} каналов** за {date_str}.\n"
         
         # Сохранение сводки в файл для истории
         if SUMMARY_SETTINGS.get('save_to_file', True):

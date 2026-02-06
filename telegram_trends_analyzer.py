@@ -197,39 +197,7 @@ class TrendsAnalyzer:
         }
     
     def format_trends_summary(self, trends_data):
-        """Форматирует сводку по трендам"""
-        summary = "📈 **АНАЛИЗ ТРЕНДОВ ЗА ДЕНЬ**\n\n"
-        
-        if trends_data.get('top_brands'):
-            summary += "🏷️ **Топ упоминаний брендов:**\n\n"
-            for brand, count in trends_data['top_brands']:
-                summary += f"  • {brand.title()}: {count} раз\n"
-            summary += "\n"
-        
-        if trends_data.get('top_products'):
-            summary += "🛍️ **Топ упоминаний продуктов:**\n\n"
-            for product, count in trends_data['top_products']:
-                summary += f"  • {product.title()}: {count} раз\n"
-            summary += "\n"
-        
-        if trends_data.get('top_flavors'):
-            summary += "🍓 **Топ упоминаний вкусов:**\n\n"
-            for flavor, count in trends_data['top_flavors']:
-                summary += f"  • {flavor.title()}: {count} раз\n"
-            summary += "\n"
-        
-        if trends_data.get('events'):
-            summary += "📅 **События и мероприятия:**\n\n"
-            for event in trends_data['events']:
-                summary += f"  • [{event['channel']}] {event['text']}\n"
-            summary += "\n"
-        
-        if trends_data.get('business_updates'):
-            summary += "💼 **Бизнес-обновления:**\n\n"
-            for update in trends_data['business_updates']:
-                summary += f"  • [{update['channel']}] {update['text']}\n"
-            summary += "\n"
-        
-        summary += f"📊 Всего ключевых упоминаний: {trends_data.get('total_keywords', 0)}\n"
-        
-        return summary
+        """Форматирует сводку по трендам в читаемом формате"""
+        # Этот раздел теперь интегрирован в format_analytics_report
+        # Оставляем пустым, чтобы избежать дублирования
+        return ""

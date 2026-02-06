@@ -436,8 +436,8 @@ class AnalyticsEngine:
 
         # Отдельный блок по брендам фокуса (Adalya / Tangiers)
         if brand_mentions:
-            report_lines.append("\n---\n")
-            report_lines.append("## 🎯 Фокус: Adalya и Tangiers\n")
+            report_lines.append("\n---\n\n")
+            report_lines.append("## 🎯 Фокус: Adalya и Tangiers\n\n")
             report_lines.append(brand_mentions.strip())
 
         return "\n".join(report_lines)

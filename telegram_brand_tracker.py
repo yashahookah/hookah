@@ -184,7 +184,7 @@ class BrandTracker:
     
     def format_brand_mentions_summary(self, mentions_data):
         """Форматирует сводку по упоминаниям брендов в читаемом формате"""
-        summary = "## 🎯 Фокус: Adalya и Tangiers\n\n"
+        summary = ""
         
         total_adalya = len(mentions_data['adalya'])
         total_tangiers = len(mentions_data['tangiers'])

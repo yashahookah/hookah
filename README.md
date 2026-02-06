@@ -2,38 +2,22 @@
 
 Автоматическая система аналитики Telegram каналов кальянной индустрии с ежедневными отчётами.
 
+**Репозиторий**: https://github.com/yashahookah/hookah
+
 ## 🚀 Быстрый старт
 
-### 1. Создай репозиторий на GitHub
+### Автоматическая загрузка
 
-Перейди на https://github.com/new и создай новый репозиторий (можно приватный).
-
-### 2. Загрузи файлы
+Выполни в терминале:
 
 ```bash
 cd /Users/bws
-
-# Инициализируй git
-git init
-
-# Добавь все нужные файлы
-git add telegram_*.py
-git add telegram_summary_config.py
-git add requirements_telegram.txt
-git add .github/
-git add .gitignore
-git add README.md
-
-# Создай коммит
-git commit -m "Initial commit: Telegram analytics system"
-
-# Добавь remote (замени на свой репозиторий)
-git remote add origin https://github.com/ТВОЙ_USERNAME/telegram-hookah-analytics.git
-
-# Загрузи на GitHub
-git branch -M main
-git push -u origin main
+./deploy_to_github.sh
 ```
+
+### Ручная загрузка
+
+Если скрипт не работает, выполни команды из файла `DEPLOY_TO_GITHUB.md`
 
 ### 3. Настрой секреты в GitHub
 

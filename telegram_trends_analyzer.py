@@ -11,11 +11,37 @@ import os
 class TrendsAnalyzer:
     def __init__(self):
         self.keywords_categories = {
-            'brands': ['adalya', 'serbetli', 'al fakher', 'darkside', 'musthave', 'tangiers', 
-                      'starbuzz', 'fumari', 'azure', 'element', 'holster', 'hit', 'h.i.t',
-                      'blackburn', 'burn', 'duft', 'satyr', 'alpha hookah', 'obt',
-                      'original by tangiers', 'zomo', 'nakhla', 'afzal', 'fumari',
-                      'social smoke', 'starbuzz', 'hookain', 'element', 'holster'],
+            'brands': [
+                # Основные российские бренды
+                'adalya', 'darkside', 'musthave', 'duft', 'blackburn', 'burn', 'satyr',
+                'element', 'holster', 'hit', 'h.i.t', 'h i t', 'hookain', 'sebero',
+                'karma', 'spectrum', 'overdose', 'overdoze', 'overdoz', 'overdose hookah',
+                'overdoze hookah', 'overdoz hookah',
+                
+                # Международные бренды табака
+                'tangiers', 'original by tangiers', 'obt', 'serbetli', 'al fakher', 'afzal',
+                'nakhla', 'starbuzz', 'fumari', 'azure', 'social smoke', 'zomo',
+                'adalya', 'trifecta', 'ugly', 'azure', 'chaos', 'eternal smoke',
+                'haze', 'hydro', 'lavoo', 'mazaya', 'nirvana', 'pure', 'social smoke',
+                'starbuzz', 'tangiers', 'trifecta', 'ugly', 'zomo',
+                
+                # Бренды кальянов и аксессуаров
+                'alpha hookah', 'amy deluxe', 'amira', 'b2 hookah', 'dsh hookah',
+                'kaloud', 'mig', 'moze', 'oduman', 'regal hookah', 'shishabucks',
+                'starbuzz hookah', 'starbuzz hookahs', 'starbuzz stems', 'union hookah',
+                'wookah', 'aeon', 'mason', 'hookah john', 'kaloud lotus', 'provost',
+                'stratus', 'samsaris', 'vitria', 'ignis', 'hmd', 'heat management',
+                
+                # Российские производители кальянов
+                'dsh', 'dsh hookah', 'dsh кальян', 'mig', 'mig hookah', 'mig кальян',
+                'moze', 'moze hookah', 'moze кальян', 'union', 'union hookah',
+                'aeon', 'aeon hookah', 'mason', 'mason hookah',
+                
+                # Другие популярные бренды
+                'fumari', 'azure', 'chaos', 'eternal smoke', 'haze', 'hydro',
+                'lavoo', 'mazaya', 'nirvana', 'pure', 'social smoke', 'trifecta',
+                'ugly', 'zomo', 'adalya', 'serbetli', 'al fakher', 'afzal', 'nakhla',
+            ],
             'products': ['табак', 'уголь', 'кальян', 'чаша', 'шланг', 'мундштук', 'колба', 
                         'hookah', 'shisha', 'tobacco', 'coals', 'bowl', 'hose'],
             'flavors': ['яблоко', 'мята', 'арбуз', 'дыня', 'манго', 'клубника', 'вишня', 

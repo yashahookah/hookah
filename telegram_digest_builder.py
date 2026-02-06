@@ -48,6 +48,17 @@ class DigestBuilder:
             "satyr",
             "alpha hookah",
             "holster",
+            "hit",
+            "h.i.t",
+            "h i t",
+            "zomo",
+            "nakhla",
+            "afzal",
+            "fumari",
+            "social smoke",
+            "starbuzz",
+            "hookain",
+            "element",
         ]
 
         # Паттерны для поиска цен
@@ -85,9 +96,33 @@ class DigestBuilder:
         ]
 
     def _find_brand(self, text_lower: str) -> str:
+        # Сначала ищем точные совпадения известных брендов
         for brand in self.brand_keywords:
-            if brand in text_lower:
+            # Используем границы слов для точного поиска
+            pattern = r'\b' + re.escape(brand) + r'\b'
+            if re.search(pattern, text_lower):
+                # Нормализуем название бренда
+                if brand == 'h.i.t' or brand == 'h i t':
+                    return 'HIT'
                 return brand.title()
+        
+        # Дополнительный поиск по паттернам (аббревиатуры, заглавные буквы)
+        # Ищем аббревиатуры типа HIT, OBT, DS и т.д.
+        abbrev_pattern = r'\b([A-Z]{2,4})\b'
+        matches = re.finditer(abbrev_pattern, text_lower)
+        for match in matches:
+            abbrev = match.group(1).upper()
+            # Исключаем общие аббревиатуры
+            exclude = ['THE', 'AND', 'FOR', 'WITH', 'THIS', 'THAT', 'FROM', 'INTO', 'OVER']
+            if abbrev not in exclude and len(abbrev) >= 2:
+                # Проверяем контекст - если рядом есть слова про табак/кальян, это может быть бренд
+                context_start = max(0, match.start() - 20)
+                context_end = min(len(text_lower), match.end() + 20)
+                context = text_lower[context_start:context_end]
+                brand_context_words = ['табак', 'кальян', 'вкус', 'аромат', 'бренд', 'tobacco', 'hookah', 'flavor', 'brand']
+                if any(word in context for word in brand_context_words):
+                    return abbrev
+        
         return ""
 
     def _find_prices(self, text: str) -> List[int]:

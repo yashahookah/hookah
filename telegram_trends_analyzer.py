@@ -12,7 +12,10 @@ class TrendsAnalyzer:
     def __init__(self):
         self.keywords_categories = {
             'brands': ['adalya', 'serbetli', 'al fakher', 'darkside', 'musthave', 'tangiers', 
-                      'starbuzz', 'fumari', 'azure', 'element', 'holster'],
+                      'starbuzz', 'fumari', 'azure', 'element', 'holster', 'hit', 'h.i.t',
+                      'blackburn', 'burn', 'duft', 'satyr', 'alpha hookah', 'obt',
+                      'original by tangiers', 'zomo', 'nakhla', 'afzal', 'fumari',
+                      'social smoke', 'starbuzz', 'hookain', 'element', 'holster'],
             'products': ['табак', 'уголь', 'кальян', 'чаша', 'шланг', 'мундштук', 'колба', 
                         'hookah', 'shisha', 'tobacco', 'coals', 'bowl', 'hose'],
             'flavors': ['яблоко', 'мята', 'арбуз', 'дыня', 'манго', 'клубника', 'вишня', 
@@ -50,10 +53,30 @@ class TrendsAnalyzer:
         text_lower = text.lower()
         found_keywords = []
         
+        # Поиск по известным брендам
         for category, keywords in self.keywords_categories.items():
             for keyword in keywords:
-                if keyword in text_lower:
+                # Используем границы слов для точного поиска
+                pattern = r'\b' + re.escape(keyword) + r'\b'
+                if re.search(pattern, text_lower):
                     found_keywords.append((category, keyword))
+        
+        # Дополнительный поиск брендов по паттернам (заглавные буквы, аббревиатуры)
+        brand_patterns = [
+            r'\b[A-Z]{2,}\b',  # Аббревиатуры типа HIT, OBT, DS
+            r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b',  # Названия типа "Original By Tangiers"
+        ]
+        
+        for pattern in brand_patterns:
+            matches = re.finditer(pattern, text)
+            for match in matches:
+                potential_brand = match.group().lower()
+                # Исключаем общие слова
+                exclude_words = ['the', 'and', 'or', 'for', 'with', 'this', 'that', 'from', 'into']
+                if potential_brand not in exclude_words and len(potential_brand) >= 2:
+                    # Проверяем, не найден ли уже этот бренд
+                    if not any(kw[1] == potential_brand for kw in found_keywords if kw[0] == 'brands'):
+                        found_keywords.append(('brands', potential_brand))
         
         return found_keywords
     

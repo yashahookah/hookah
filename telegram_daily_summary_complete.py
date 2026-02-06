@@ -353,6 +353,14 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == '--test':
         print("🧪 Тестовый запуск...")
-        asyncio.run(create_and_send_summary())
+        try:
+            asyncio.run(create_and_send_summary())
+            print("✅ Тест завершён успешно")
+            sys.exit(0)
+        except Exception as e:
+            print(f"❌ Ошибка при выполнении теста: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
     else:
         main()

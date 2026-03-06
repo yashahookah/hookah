@@ -1,6 +1,7 @@
 # Telegram session files
-*.session
 *.session-journal
+# Разрешаем основной файл сессии для GitHub Actions
+# telegram_summary_session.session
 
 # Environment variables
 .env

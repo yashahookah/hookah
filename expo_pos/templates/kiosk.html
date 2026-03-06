@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Киоск — Expo POS{% endblock %}
+{% block content %}
+<section class="kiosk" id="kiosk-root">
+    <div class="kiosk-aroma-halo" id="kiosk-aroma-halo">
+        <div class="kiosk-aroma-halo__hint"></div>
+        <div class="kiosk-aroma-halo__items" id="kiosk-aroma-halo-items">
+            <!-- Подписи ароматов вокруг активной пачки (заполняются через JS) -->
+        </div>
+    </div>
+
+    <div class="kiosk-description" id="kiosk-description"></div>
+
+    <div class="kiosk__slides" id="kiosk-slides">
+        <!-- Слайды с товарами наполняются через JS -->
+    </div>
+    <button class="kiosk-fab-global" id="kiosk-add-active">+</button>
+    <div class="kiosk__bottom-bar" id="kiosk-bottom-bar">
+        <div class="kiosk__bottom-main">
+            <button class="kiosk__bottom-simple" onclick="window.location.href='/seller'">
+                Простое меню
+            </button>
+            <div class="kiosk__bottom-text">
+                <span id="kiosk-summary-text">Корзина пуста</span>
+            </div>
+            <button class="kiosk__bottom-button" id="kiosk-open-cart" disabled>
+                Посмотреть заказ
+            </button>
+        </div>
+    </div>
+
+    <div class="kiosk-cart-overlay" id="kiosk-cart-overlay">
+        <div class="kiosk-cart-sheet">
+            <div class="kiosk-cart-header">
+                <span>Ваш заказ</span>
+                <button class="kiosk-cart-close" id="kiosk-close-cart">×</button>
+            </div>
+            <div class="kiosk-cart-body">
+                <ul class="kiosk-cart-items" id="kiosk-cart-items"></ul>
+                <div class="kiosk-cart-empty" id="kiosk-cart-empty">
+                    Вы ещё не выбрали вкусы.
+                </div>
+            </div>
+            <div class="kiosk-cart-footer">
+                <div class="kiosk-cart-total">
+                    <span>Итого:</span>
+                    <span id="kiosk-cart-total">0 ₽</span>
+                </div>
+                <button class="kiosk-cart-submit" id="kiosk-submit-order" disabled>
+                    Отправить на сборку
+                </button>
+                <div class="kiosk-cart-message" id="kiosk-cart-message"></div>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="/static/js/kiosk.js?v=9"></script>
+{% endblock %}
+

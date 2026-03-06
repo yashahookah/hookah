@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Склад — Expo POS{% endblock %}
+{% block content %}
+<section class="picking">
+    <h1 class="page-title">Склад / Сборка заказов</h1>
+    <div class="picking__controls">
+        <span>Статусы:</span>
+        <label><input type="checkbox" class="status-filter" value="new" checked /> Новые</label>
+        <label><input type="checkbox" class="status-filter" value="picking" checked /> В сборке</label>
+        <label><input type="checkbox" class="status-filter" value="ready" checked /> Готовы</label>
+    </div>
+    <div id="orders" class="orders-list">
+        <!-- Наполняется через JS -->
+    </div>
+    <div class="hint">Страница автоматически обновляется каждые несколько секунд.</div>
+</section>
+<script src="/static/js/picking.js"></script>
+{% endblock %}
+

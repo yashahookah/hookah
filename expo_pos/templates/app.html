@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Expo POS{% endblock %}
+{% block content %}
+<div id="app-root">
+    <div id="view-kiosk" class="app-view">
+        {% include "partials/kiosk_section.html" %}
+    </div>
+    <div id="view-seller" class="app-view app-view--hidden">
+        {% include "partials/seller_section.html" %}
+    </div>
+</div>
+<div id="seller-floating-bar" class="seller-floating-bar seller-floating-bar--hidden">
+    <div class="seller-floating-summary" id="seller-floating-summary" role="button" tabindex="0">
+        <button type="button" class="seller-floating-summary__fancy-link" id="app-btn-kiosk">Красивое меню</button>
+        <div class="seller-floating-summary__right">
+            <span class="seller-floating-summary__label">Корзина</span>
+            <span class="seller-floating-summary__value" id="seller-floating-total">0 ₽</span>
+        </div>
+    </div>
+</div>
+<script src="/static/js/app.js?v=7"></script>
+<script src="/static/js/kiosk.js?v=10"></script>
+<script src="/static/js/seller.js?v=5"></script>
+{% endblock %}

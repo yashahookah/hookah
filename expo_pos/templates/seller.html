@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Продажа — Expo POS{% endblock %}
+{% block content %}
+<section class="seller">
+    <h1 class="page-title">Продажа</h1>
+    <div class="seller__layout">
+        <div class="seller__products">
+            <div class="seller-alpha-nav" aria-label="Быстрый переход по буквам">
+                <span class="seller-alpha-nav__label">A–Z</span>
+                <div class="seller-alpha-nav__track" id="seller-alpha-nav">
+                    <!-- Буквы заполняются через JS -->
+                </div>
+            </div>
+            <div class="seller__products-body">
+                <h2 class="section-title">Товары</h2>
+                <div id="products" class="products-grid">
+                    <!-- Наполняется через JS -->
+                </div>
+            </div>
+        </div>
+        <div class="seller__cart">
+            <h2 class="section-title">Заказ</h2>
+            <div id="cart-empty" class="cart-empty">Выберите пачки слева</div>
+            <ul id="cart-items" class="cart-items"></ul>
+            <div class="cart-summary">
+                <div class="cart-summary__row">
+                    <span>Итого:</span>
+                    <span id="cart-total" class="cart-summary__total">0 ₽</span>
+                </div>
+                <button id="submit-order" class="primary-btn" disabled>Создать заказ</button>
+                <div id="cart-message" class="cart-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="seller-floating-summary" id="seller-floating-summary" type="button">
+        <div class="seller-floating-summary__main">
+            <a href="/kiosk" class="seller-floating-summary__fancy-link">
+                Красивое меню
+            </a>
+            <div class="seller-floating-summary__right">
+                <div class="seller-floating-summary__label">Корзина</div>
+                <div class="seller-floating-summary__value" id="seller-floating-total">0 ₽</div>
+            </div>
+        </div>
+    </button>
+</section>
+<script src="/static/js/seller.js?v=4"></script>
+{% endblock %}
+

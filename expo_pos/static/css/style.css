@@ -67,7 +67,8 @@ body.view-seller-active .page {
     }
 }
 
-.kiosk .page {
+/* Киоск — без рамок и отступов по краям */
+body.kiosk-body-lock .page {
     max-width: none;
     padding: 0;
 }
@@ -484,24 +485,50 @@ body.view-seller-active .seller {
 .product-card__controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 8px;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 6px;
 }
 
 .qty-btn {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 999px;
     border: none;
     background: #facc15;
     color: #111827;
-    font-size: 18px;
+    font-size: 17px;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
 .qty-value {
-    min-width: 24px;
+    min-width: 20px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
+}
+
+.qty-btn--bump {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.5);
+}
+
+.product-card--flash {
+    animation: productCardFlash 0.35s ease-out;
+}
+
+@keyframes productCardFlash {
+    0% {
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0);
+        border-color: rgba(148, 163, 184, 0.2);
+    }
+    30% {
+        box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4);
+        border-color: rgba(250, 204, 21, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0);
+        border-color: rgba(148, 163, 184, 0.2);
+    }
 }
 
 .cart-empty {
@@ -1980,7 +2007,7 @@ body.kiosk-body-lock {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: -4px; /* чуть опускаем бар, чтобы визуально убрать зазор снизу */
     padding: 8px 12px;
     background: linear-gradient(to top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.8));
     border-top: 1px solid rgba(148, 163, 184, 0.4);

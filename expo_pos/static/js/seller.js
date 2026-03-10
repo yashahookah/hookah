@@ -23,6 +23,8 @@ const SEARCH_ALIASES = {
   "канеминт": "Cane Mint",
   "кэйн минт": "Cane Mint",
   "кеин минт": "Cane Mint",
+  "кейн": "Cane Mint",
+  "кей": "Cane Mint",
 
   "блитцштурм": "Blitzsturm",
   "блитзштурм": "Blitzsturm",
@@ -128,6 +130,15 @@ function normalizeTextForSearch(text) {
     .replace(/ё/g, "е");
 }
 
+function resolveAliasTarget(normQ) {
+  if (!normQ) return null;
+  if (SEARCH_ALIASES[normQ]) return SEARCH_ALIASES[normQ];
+  for (const key in SEARCH_ALIASES) {
+    if (normQ.includes(key)) return SEARCH_ALIASES[key];
+  }
+  return null;
+}
+
 // Грубый транслит EN -> RU для поиска по латинским названиям "на слух"
 function translitEnToRuForSearch(text) {
   if (!text) return "";
@@ -186,8 +197,8 @@ function productMatchesQuery(product, q) {
   const normQ = normalizeTextForSearch(q).trim();
   if (!normQ) return true;
 
-  // если запрос целиком совпадает с алиасом — жёстко матчим по имени
-  const aliasTarget = SEARCH_ALIASES[normQ];
+  // если запрос совпадает с алиасом (точно или по вхождению) — матчим по имени
+  const aliasTarget = resolveAliasTarget(normQ);
   if (aliasTarget) {
     // матчим, если имя содержит базовое название (чтобы ловить Cool Strawberry N, Pink и т.п.)
     return (product.name || "")
@@ -215,11 +226,13 @@ function productMatchesQuery(product, q) {
 
   const tokens = normQ.split(/\s+/).filter(Boolean);
   return tokens.every((token) => {
-    // для русских слов делаем поиск по корню (убираем последний символ)
+    // для русских слов делаем поиск по началу слова (общий корень),
+    // чтобы "клубника" находила "клубничный", "мята" — "мятный" и т.п.
     const isCyr = /[а-я]/.test(token);
     let needle = token;
     if (isCyr && token.length >= 4) {
-      needle = token.slice(0, token.length - 1);
+      // берём первые 4 буквы как общий корень
+      needle = token.slice(0, 4);
     }
     return haystack.includes(needle);
   });
@@ -506,6 +519,17 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!btn || !btn.dataset || !btn.dataset.role) return;
       const id = parseInt(btn.dataset.id, 10);
       if (!Number.isFinite(id)) return;
+
+      const card = btn.closest(".product-card");
+      if (card) {
+        card.classList.remove("product-card--flash");
+        // force reflow, чтобы анимация могла переиграть
+        void card.offsetWidth;
+        card.classList.add("product-card--flash");
+      }
+      btn.classList.add("qty-btn--bump");
+      setTimeout(() => btn.classList.remove("qty-btn--bump"), 160);
+
       if (btn.dataset.role === "inc") {
         addToCart(id, 1);
       } else if (btn.dataset.role === "dec") {

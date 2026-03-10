@@ -642,7 +642,15 @@ function kioskUpdateDescription() {
   }
   const meta = p.code ? kioskAromaMeta[p.code] : undefined;
   const bgClass = meta && meta.bgClass ? meta.bgClass : "kiosk-bg--berry-deep";
-  const textColor = kioskLabelColorByBg[bgClass] || "#f8fafc";
+  let textColor;
+  if (
+    bgClass === "kiosk-bg--mixed-fruit" ||
+    bgClass === "kiosk-bg--nectarine"
+  ) {
+    textColor = "#0f172a";
+  } else {
+    textColor = kioskLabelColorByBg[bgClass] || "#f8fafc";
+  }
 
   const cats = kioskCategoriesByBg[bgClass] || ["Сладкий"];
 
@@ -901,10 +909,18 @@ function kioskRenderCart() {
 
 function kioskOpenCart() {
   document.getElementById("kiosk-cart-overlay").classList.add("is-open");
+  const fab = document.getElementById("kiosk-add-active");
+  if (fab) {
+    fab.classList.add("kiosk-fab-global--hidden");
+  }
 }
 
 function kioskCloseCart() {
   document.getElementById("kiosk-cart-overlay").classList.remove("is-open");
+  const fab = document.getElementById("kiosk-add-active");
+  if (fab) {
+    fab.classList.remove("kiosk-fab-global--hidden");
+  }
 }
 
 async function kioskSubmitOrder() {

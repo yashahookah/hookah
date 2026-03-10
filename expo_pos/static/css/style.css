@@ -1443,6 +1443,15 @@ body.kiosk-body-lock {
         #ffffff;
 }
 
+/* Для очень светлых фонов: без «таблеток», просто более тёмный текст с лёгким светлым контуром */
+.kiosk.kiosk-bg--mixed-fruit .kiosk-description,
+.kiosk.kiosk-bg--nectarine .kiosk-description {
+    color: #0f172a;
+    text-shadow:
+        0 0 2px rgba(248, 250, 252, 0.9),
+        0 0 6px rgba(248, 250, 252, 0.8);
+}
+
 /* Maraschino Cherry — глубокий тёмный фон с вишнёвыми вспышками */
 .kiosk.kiosk-bg--maraschino-cherry::before {
     background:
@@ -1921,6 +1930,13 @@ body.kiosk-body-lock {
         0 18px 36px rgba(15, 23, 42, 0.65),
         0 0 0 1px rgba(250, 204, 21, 0.8);
     z-index: 10;
+}
+
+.kiosk-fab-global--hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 
 .kiosk-fab-global__icon {

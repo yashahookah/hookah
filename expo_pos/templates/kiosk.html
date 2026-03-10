@@ -14,7 +14,10 @@
     <div class="kiosk__slides" id="kiosk-slides">
         <!-- Слайды с товарами наполняются через JS -->
     </div>
-    <button class="kiosk-fab-global" id="kiosk-add-active">+</button>
+    <button class="kiosk-fab-global" id="kiosk-add-active">
+        <span class="kiosk-fab-global__icon">+</span>
+        <span class="kiosk-fab-global__label">в корзину</span>
+    </button>
     <div class="kiosk__bottom-bar" id="kiosk-bottom-bar">
         <div class="kiosk__bottom-main">
             <button class="kiosk__bottom-simple" onclick="window.location.href='/seller'">
@@ -54,6 +57,6 @@
         </div>
     </div>
 </section>
-<script src="/static/js/kiosk.js?v=9"></script>
+<script src="/static/js/kiosk.js?v=10"></script>
 {% endblock %}
 

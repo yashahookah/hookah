@@ -644,7 +644,7 @@ async function submitOrder() {
   const msgEl = document.getElementById("cart-message");
   const btn = document.getElementById("submit-order");
   btn.disabled = true;
-  msgEl.textContent = "Отправка заказа...";
+  msgEl.textContent = "Отправляем заказ…";
   msgEl.className = "cart-message";
 
   try {
@@ -658,7 +658,7 @@ async function submitOrder() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.detail || "Ошибка создания заказа");
+      throw new Error(data.detail || "Не получилось создать заказ, попробуйте ещё раз.");
     }
 
     const data = await res.json().catch(() => ({}));
@@ -674,7 +674,10 @@ async function submitOrder() {
     }
   } catch (e) {
     console.error(e);
-    msgEl.textContent = e.message || "Ошибка";
+    msgEl.textContent =
+      e && e.message
+        ? e.message
+        : "Не получилось создать заказ. Попросите бармена помочь — быстро всё решим.";
     msgEl.className = "cart-message cart-message--error";
   } finally {
     btn.disabled = false;

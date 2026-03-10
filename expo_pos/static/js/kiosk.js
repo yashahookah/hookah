@@ -394,10 +394,10 @@ function kioskGetImageUrl(product) {
 async function kioskFetchProducts() {
   try {
     const res = await fetch("/api/products");
-    if (!res.ok) {
-      console.error("Ошибка загрузки товаров");
-      return;
-    }
+  if (!res.ok) {
+    console.error("Ошибка загрузки товаров");
+    return;
+  }
     const data = await res.json();
     // сортируем пачки по имени, чтобы иерархия была логичной
     kioskState.products = data.sort((a, b) =>
@@ -919,7 +919,7 @@ async function kioskSubmitOrder() {
   const msgEl = document.getElementById("kiosk-cart-message");
   const btn = document.getElementById("kiosk-submit-order");
   btn.disabled = true;
-  msgEl.textContent = "Отправляем заказ...";
+  msgEl.textContent = "Отправляем заказ…";
   msgEl.className = "kiosk-cart-message";
 
   try {
@@ -932,7 +932,9 @@ async function kioskSubmitOrder() {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.detail || "Ошибка создания заказа");
+      throw new Error(
+        data.detail || "Не получилось создать заказ, попробуйте ещё раз."
+      );
     }
 
     const data = await res.json().catch(() => ({}));
@@ -949,7 +951,10 @@ async function kioskSubmitOrder() {
     }
   } catch (e) {
     console.error(e);
-    msgEl.textContent = e.message || "Ошибка";
+    msgEl.textContent =
+      e && e.message
+        ? e.message
+        : "Не получилось создать заказ. Позовите бармена — он поможет.";
     msgEl.className = "kiosk-cart-message kiosk-cart-message--error";
   } finally {
     btn.disabled = false;

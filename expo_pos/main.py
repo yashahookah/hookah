@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
@@ -63,6 +63,13 @@ app.mount(
 )
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Иконка сайта для браузера (/favicon.ico)."""
+    path = BASE_DIR / "static" / "img" / "favicon.svg"
+    return FileResponse(path)
 
 
 def init_db():

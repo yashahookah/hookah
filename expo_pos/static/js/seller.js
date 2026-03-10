@@ -456,9 +456,12 @@ function renderProducts() {
 
 function sellerPlayAddToCartAnimation(product, cardEl) {
   if (!cardEl || !product) return;
+  const targetFloatingRight = document.querySelector(
+    "#seller-floating-summary .seller-floating-summary__right"
+  );
   const targetFloating = document.getElementById("seller-floating-summary");
   const targetCart = document.querySelector(".seller__cart");
-  const targetEl = targetFloating || targetCart;
+  const targetEl = targetFloatingRight || targetFloating || targetCart;
   if (!targetEl) return;
 
   const cardRect = cardEl.getBoundingClientRect();
@@ -468,7 +471,7 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
   fly.classList.add("seller-pack-fly");
   fly.style.left = `${cardRect.left}px`;
   fly.style.top = `${cardRect.top + cardRect.height / 2 - 28}px`;
-  fly.style.transform = "translate(0, 0) scale(1)";
+  fly.style.transform = "translate(0, 0) scale(1) rotate(-4deg)";
   fly.style.opacity = "1";
   const accent = getAccentColorForProduct(product);
   fly.style.setProperty("--pack-accent", accent);
@@ -491,7 +494,7 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
     (cardRect.top + cardRect.height / 2);
 
   requestAnimationFrame(() => {
-    fly.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.6)`;
+    fly.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.6) rotate(6deg)`;
     fly.style.opacity = "0";
   });
 

@@ -47,6 +47,11 @@ const SEARCH_ALIASES = {
   ерик: "Eric's Mango",
 };
 
+function sellerGetImageUrl(product) {
+  if (!product || !product.code) return "/static/img/placeholder-pack.png";
+  return `/static/img/${product.code}.png`;
+}
+
 function showOrderToast(orderId) {
   const rootId = "order-toast";
   let root = document.getElementById(rootId);
@@ -60,7 +65,7 @@ function showOrderToast(orderId) {
         <div class="order-toast__title">Заказ оформлен</div>
         <div class="order-toast__text">
           Заказ № <span class="order-toast__number" data-role="order-toast-number"></span>
-          отправлен на сборку, запомните свой номер заказа.
+          отправлен на сборку. Пожалуйста, <strong>запомните</strong> или <strong>сделайте скриншот</strong> этого номера — он понадобится на выдаче.
         </div>
       </div>
     `;
@@ -89,7 +94,7 @@ function showOrderToast(orderId) {
   orderToastTimer = setTimeout(() => {
     root.classList.remove("order-toast--visible");
     orderToastTimer = null;
-  }, 5000);
+  }, 15000);
 }
 
 function escapeHtml(s) {
@@ -467,20 +472,24 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
   const cardRect = cardEl.getBoundingClientRect();
   const targetRect = targetEl.getBoundingClientRect();
 
+  // Летит именно упаковка, как в киоске
   const fly = document.createElement("div");
-  fly.classList.add("seller-pack-fly");
-  fly.style.left = `${cardRect.left}px`;
-  fly.style.top = `${cardRect.top + cardRect.height / 2 - 28}px`;
-  fly.style.transform = "translate(0, 0) scale(1) rotate(-4deg)";
+  fly.classList.add("kiosk-pack-fly");
+  const img = document.createElement("img");
+  img.className = "kiosk-pack-img";
+  img.src = sellerGetImageUrl(product);
+  img.alt = product.name || "";
+  fly.appendChild(img);
+
+  const baseWidth = Math.min(cardRect.width, 180);
+  const baseHeight = baseWidth * 1.4;
+
+  fly.style.left = `${cardRect.left + cardRect.width / 2 - baseWidth / 2}px`;
+  fly.style.top = `${cardRect.top + cardRect.height / 2 - baseHeight / 2}px`;
+  fly.style.width = `${baseWidth}px`;
+  fly.style.height = `${baseHeight}px`;
+  fly.style.transform = "translate(0, 0) scale(1.08) rotate(0deg)";
   fly.style.opacity = "1";
-  const accent = getAccentColorForProduct(product);
-  fly.style.setProperty("--pack-accent", accent);
-  const safeName = escapeHtml(product.name || "");
-  fly.innerHTML = `
-    <div class="seller-pack-fly__pack">
-      <div class="seller-pack-fly__label">${safeName}</div>
-    </div>
-  `;
 
   document.body.appendChild(fly);
 
@@ -494,7 +503,7 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
     (cardRect.top + cardRect.height / 2);
 
   requestAnimationFrame(() => {
-    fly.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.6) rotate(6deg)`;
+    fly.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.22) rotate(12deg)`;
     fly.style.opacity = "0";
   });
 

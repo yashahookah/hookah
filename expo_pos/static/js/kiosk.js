@@ -4,6 +4,15 @@ const kioskState = {
   activeIndex: 0,
 };
 
+const KIOSK_RU_TAG_OVERRIDES = {
+  "2005 Blueberry": "Черничный кекс",
+  "Blackberry Lime": "Ежевика и лайм",
+  Blitzsturm: "Лаванда и мята",
+  "Cane Mint": "Мятные леденцы",
+  Horchata: "Орчата, рисовый напиток",
+  "Cool Strawberry": "Засахаренная клубника",
+};
+
 // Костыль для фирменных надписей (лого-вкусов)
 // Ожидаем картинки с чёрным текстом на белом фоне,
 // лежащие в /static/img/labels/
@@ -624,9 +633,9 @@ function kioskUpdateDescription() {
   let idx = kioskState.activeIndex;
   idx = ((idx % total) + total) % total;
   const p = products[idx];
-  const rawDesc = (p.description || "").trim();
+  const desc = (p.description || "").trim();
   const name = (p.name || "").trim();
-  if (!rawDesc && !name) {
+  if (!desc && !name) {
     el.innerHTML = "";
     el.style.display = "none";
     return;
@@ -648,37 +657,11 @@ function kioskUpdateDescription() {
           .join("") +
         `</div>`
       : "";
-
-  // Строим заголовок вида "Cool Strawberry — засахаренная клубника"
-  let title = name;
-  let body = rawDesc;
-  if (rawDesc) {
-    let firstSentence = rawDesc.split(/[.!?]/)[0] || rawDesc;
-    firstSentence = firstSentence.split("—")[0] || firstSentence;
-    firstSentence = firstSentence.replace(
-      /^(Это|Это аромат|Аромат|Настоящий|Настоящая|Настоящее|Классический|Легендарный)\s+/i,
-      ""
-    );
-    firstSentence = firstSentence.trim();
-    if (firstSentence.length > 50) {
-      const words = firstSentence.split(/\s+/).slice(0, 4);
-      firstSentence = words.join(" ");
-    }
-    if (firstSentence) {
-      title = name ? `${name} — ${firstSentence}` : firstSentence;
-      const dotIdx = rawDesc.search(/[.!?]/);
-      body =
-        dotIdx >= 0 && dotIdx + 1 < rawDesc.length
-          ? rawDesc.slice(dotIdx + 1).trim()
-          : "";
-    }
-  }
-
   const html =
-    (title
-      ? `<span class="kiosk-desc-name">${kioskEscape(title)}</span> `
+    (name
+      ? `<span class="kiosk-desc-name">${kioskEscape(name)}</span> `
       : "") +
-    (body ? kioskEscape(body) : "") +
+    (desc ? kioskEscape(desc) : "") +
     catsHtml;
 
   const dir = kioskState.lastDirection || 1;

@@ -28,11 +28,21 @@ const SEARCH_ALIASES = {
   "блитзштурм": "Blitzsturm",
   "блицштурм": "Blitzsturm",
   "блиц шторм": "Blitzsturm",
+  "блитз": "Blitzsturm",
 
   орчата: "Horchata",
   орчатта: "Horchata",
   орчадо: "Horchata",
   хорчата: "Horchata",
+
+  кул: "Cool Strawberry",
+  "кул стравбери": "Cool Strawberry",
+  "кул стробери": "Cool Strawberry",
+
+  "эрик манго": "Eric's Mango",
+  "ерик манго": "Eric's Mango",
+  эрик: "Eric's Mango",
+  ерик: "Eric's Mango",
 };
 
 function showOrderToast(orderId) {
@@ -118,6 +128,59 @@ function normalizeTextForSearch(text) {
     .replace(/ё/g, "е");
 }
 
+// Грубый транслит EN -> RU для поиска по латинским названиям "на слух"
+function translitEnToRuForSearch(text) {
+  if (!text) return "";
+  let s = String(text).toLowerCase();
+  s = s
+    .replace(/ch/g, "ч")
+    .replace(/sh/g, "ш")
+    .replace(/sch/g, "щ")
+    .replace(/ya/g, "я")
+    .replace(/yu/g, "ю")
+    .replace(/yo/g, "ё")
+    .replace(/ts/g, "ц")
+    .replace(/tz/g, "ц")
+    .replace(/th/g, "т")
+    .replace(/ph/g, "ф")
+    .replace(/ee/g, "и")
+    .replace(/oo/g, "у");
+  const map = {
+    a: "а",
+    b: "б",
+    c: "к",
+    d: "д",
+    e: "е",
+    f: "ф",
+    g: "г",
+    h: "х",
+    i: "и",
+    j: "дж",
+    k: "к",
+    l: "л",
+    m: "м",
+    n: "н",
+    o: "о",
+    p: "п",
+    q: "к",
+    r: "р",
+    s: "с",
+    t: "т",
+    u: "у",
+    v: "в",
+    w: "в",
+    x: "кс",
+    y: "и",
+    z: "з",
+    "-": " ",
+  };
+  let out = "";
+  for (let ch of s) {
+    out += map[ch] || ch;
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
 function productMatchesQuery(product, q) {
   if (!q) return true;
   const normQ = normalizeTextForSearch(q).trim();
@@ -126,14 +189,29 @@ function productMatchesQuery(product, q) {
   // если запрос целиком совпадает с алиасом — жёстко матчим по имени
   const aliasTarget = SEARCH_ALIASES[normQ];
   if (aliasTarget) {
-    return product.name === aliasTarget;
+    // матчим, если имя содержит базовое название (чтобы ловить Cool Strawberry N, Pink и т.п.)
+    return (product.name || "")
+      .toLowerCase()
+      .includes(String(aliasTarget).toLowerCase());
   }
 
-  const haystack = normalizeTextForSearch(
+  const hasCyr = /[а-я]/.test(normQ);
+
+  let haystack = normalizeTextForSearch(
     [product.name, product.code, product.description, buildRuName(product)]
       .filter(Boolean)
       .join(" ")
   );
+
+  // если пользователь вводит по‑русски, добавляем грубый транслит латинских имён
+  if (hasCyr) {
+    const phon = translitEnToRuForSearch(
+      `${product.name || ""} ${product.code || ""}`
+    );
+    if (phon) {
+      haystack += " " + phon;
+    }
+  }
 
   const tokens = normQ.split(/\s+/).filter(Boolean);
   return tokens.every((token) => {
@@ -197,8 +275,32 @@ function renderProducts() {
 
     groups[letter].forEach((p) => {
       const qty = state.cart[p.id] || 0;
-      const desc = shortenDescription(p.description || "", 110);
+      const fullDesc = (p.description || "").trim();
       const ruName = buildRuName(p);
+
+      // Убираем из описания расшифровку, чтобы не было дублей
+      let bodyDesc = fullDesc;
+      if (ruName && fullDesc) {
+        const norm = (s) => String(s).replace(/\s+/g, " ").trim();
+        const d = norm(fullDesc);
+        const tag = norm(ruName);
+        const lowerD = d.toLowerCase();
+        const lowerTag = tag.toLowerCase();
+
+        if (lowerD.startsWith(lowerTag)) {
+          bodyDesc = d.slice(tag.length).trim().replace(/^[\s.,–—-]+/, "");
+        } else {
+          const sentEnd = d.search(/[.!?]/);
+          if (sentEnd >= 0) {
+            const firstSentence = d.slice(0, sentEnd).trim();
+            if (firstSentence.toLowerCase() === lowerTag) {
+              bodyDesc = d.slice(sentEnd + 1).trim().replace(/^[\s]+/, "");
+            }
+          }
+        }
+      }
+
+      const desc = bodyDesc ? shortenDescription(bodyDesc, 110) : "";
       const card = document.createElement("div");
       card.className = "product-card";
       card.innerHTML = `

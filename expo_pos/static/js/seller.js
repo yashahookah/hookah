@@ -139,6 +139,113 @@ function resolveAliasTarget(normQ) {
   return null;
 }
 
+function getAccentColorFromCode(code) {
+  const base = String(code || "").toLowerCase() || "default";
+  let hash = 0;
+  for (let i = 0; i < base.length; i++) {
+    hash = (hash * 31 + base.charCodeAt(i)) >>> 0;
+  }
+  const hue = hash % 360;
+  const sat = 80;
+  const light = 55;
+  return `hsl(${hue}deg ${sat}% ${light}%)`;
+}
+
+function getAccentColorForProduct(product) {
+  const text = normalizeTextForSearch(
+    [product.name, product.code, product.description].filter(Boolean).join(" ")
+  );
+
+  // Мята / ментол
+  if (text.includes("мят") || text.includes("mint")) {
+    return "#22c55e"; // ярко-мятный зелёный
+  }
+
+  // Клубника / клубничный
+  if (text.includes("клубник") || text.includes("strawberry")) {
+    return "#fb7185"; // клубнично-розовый
+  }
+
+  // Черника / ежевика / ягоды
+  if (
+    text.includes("черник") ||
+    text.includes("ежевик") ||
+    text.includes("ягод") ||
+    text.includes("berry")
+  ) {
+    return "#6366f1"; // ягодный фиолетово-синий
+  }
+
+  // Лаванда / фиалка / цветочные
+  if (
+    text.includes("лаванд") ||
+    text.includes("фиалк") ||
+    text.includes("flower")
+  ) {
+    return "#a855f7"; // лавандовый
+  }
+
+  // Цитрусы: лимон, лайм, апельсин, грейпфрут
+  if (
+    text.includes("лимон") ||
+    text.includes("лайм") ||
+    text.includes("цитрус") ||
+    text.includes("orange") ||
+    text.includes("grapefruit") ||
+    text.includes("citrus")
+  ) {
+    return "#facc15"; // жёлто-оранжевый цитрусовый
+  }
+
+  // Арбуз / дыня / тропики
+  if (
+    text.includes("арбуз") ||
+    text.includes("дын") ||
+    text.includes("melon") ||
+    text.includes("tropical") ||
+    text.includes("манго") ||
+    text.includes("mango") ||
+    text.includes("персик") ||
+    text.includes("peach") ||
+    text.includes("гуаява") ||
+    text.includes("guava") ||
+    text.includes("папая") ||
+    text.includes("papaya")
+  ) {
+    return "#14b8a6"; // бирюзовый тропический / сочные фрукты
+  }
+
+  // Кремовые / ваниль / десерт
+  if (
+    text.includes("ванил") ||
+    text.includes("сливоч") ||
+    text.includes("десерт") ||
+    text.includes("cream")
+  ) {
+    return "#f97316"; // тёплый кремовый оранжевый
+  }
+
+  // Чай / пряные
+  if (text.includes("чай") || text.includes("tea") || text.includes("kashmir")) {
+    return "#fb923c"; // тёплый пряный
+  }
+
+  // Яблоко / груша / виноград — мягкий фруктовый
+  if (
+    text.includes("яблок") ||
+    text.includes("apple") ||
+    text.includes("груш") ||
+    text.includes("pear") ||
+    text.includes("виноград") ||
+    text.includes("grape")
+  ) {
+    return "#4ade80"; // мягкий зелёный фруктовый
+  }
+
+  // Фолбэк — хэш по коду, чтобы всё равно был стабильный цвет
+  return getAccentColorFromCode(product.code || product.name);
+}
+
 // Грубый транслит EN -> RU для поиска по латинским названиям "на слух"
 function translitEnToRuForSearch(text) {
   if (!text) return "";
@@ -316,6 +423,9 @@ function renderProducts() {
       const desc = bodyDesc ? shortenDescription(bodyDesc, 110) : "";
       const card = document.createElement("div");
       card.className = "product-card";
+      const accentColor = getAccentColorForProduct(p);
+      card.style.setProperty("--accent-color", accentColor);
+      card.classList.add("product-card--accent");
       card.innerHTML = `
         <div class="product-card__name">
           <span class="product-card__name-en">${escapeHtml(p.name)}</span>
@@ -342,6 +452,53 @@ function renderProducts() {
   });
 
   buildAlphaNav(letters);
+}
+
+function sellerPlayAddToCartAnimation(product, cardEl) {
+  if (!cardEl || !product) return;
+  const targetFloating = document.getElementById("seller-floating-summary");
+  const targetCart = document.querySelector(".seller__cart");
+  const targetEl = targetFloating || targetCart;
+  if (!targetEl) return;
+
+  const cardRect = cardEl.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+
+  const fly = document.createElement("div");
+  fly.classList.add("seller-pack-fly");
+  fly.style.left = `${cardRect.left}px`;
+  fly.style.top = `${cardRect.top + cardRect.height / 2 - 16}px`;
+  fly.style.transform = "translate(0, 0) scale(1)";
+  fly.style.opacity = "1";
+  const accent = getAccentColorForProduct(product);
+  fly.style.background = accent;
+  fly.style.borderColor = accent;
+  fly.textContent = (product.name || "").toUpperCase();
+
+  document.body.appendChild(fly);
+
+  const translateX =
+    targetRect.left +
+    targetRect.width / 2 -
+    (cardRect.left + cardRect.width / 2);
+  const translateY =
+    targetRect.top +
+    targetRect.height / 2 -
+    (cardRect.top + cardRect.height / 2);
+
+  requestAnimationFrame(() => {
+    fly.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.6)`;
+    fly.style.opacity = "0";
+  });
+
+  const removeAfter = () => {
+    if (fly && fly.parentNode) {
+      fly.parentNode.removeChild(fly);
+    }
+  };
+
+  fly.addEventListener("transitionend", removeAfter, { once: true });
+  setTimeout(removeAfter, 1200);
 }
 
 function buildAlphaNav(letters) {
@@ -379,6 +536,15 @@ function buildAlphaNav(letters) {
 function addToCart(productId, delta) {
   const product = state.products.find((p) => p.id === productId);
   if (!product) return;
+  if (delta > 0) {
+    const btn = document.querySelector(
+      `.qty-btn[data-role="inc"][data-id="${productId}"]`
+    );
+    const card = btn ? btn.closest(".product-card") : null;
+    if (card) {
+      sellerPlayAddToCartAnimation(product, card);
+    }
+  }
   const current = state.cart[productId] || 0;
   let next = current + delta;
   if (next < 0) next = 0;

@@ -430,13 +430,38 @@ body.view-seller-active .seller {
 }
 
 .product-card {
-    background: #020617;
+    background: radial-gradient(circle at 0 0, #020617 0, #020617 35%, #020617 100%);
     border-radius: 12px;
     padding: 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid color-mix(in srgb, var(--accent-color) 60%, rgba(15, 23, 42, 0.9));
+    position: relative;
+    overflow: hidden;
+    --accent-color: #facc15;
+    transition:
+        transform 0.16s ease-out,
+        box-shadow 0.16s ease-out,
+        border-color 0.16s ease-out;
+}
+
+.product-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background:
+        radial-gradient(circle at 0 0, color-mix(in srgb, var(--accent-color) 50%, transparent) 0, transparent 55%),
+        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--accent-color) 40%, transparent) 0, transparent 60%);
+    opacity: 0.22;
+    pointer-events: none;
+    transition: opacity 0.2s ease-out;
+}
+
+.product-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.85);
 }
 
 .product-card__desc {
@@ -513,22 +538,45 @@ body.view-seller-active .seller {
 }
 
 .product-card--flash {
-    animation: productCardFlash 0.35s ease-out;
+    animation: productCardFlash 0.4s ease-out;
 }
 
 @keyframes productCardFlash {
     0% {
-        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0);
-        border-color: rgba(148, 163, 184, 0.2);
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
+        border-color: rgba(148, 163, 184, 0.3);
     }
     30% {
-        box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4);
-        border-color: rgba(250, 204, 21, 0.8);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 70%, transparent);
+        border-color: color-mix(in srgb, var(--accent-color) 90%, rgba(148, 163, 184, 0.4));
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.0);
-        border-color: rgba(148, 163, 184, 0.2);
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
+        border-color: rgba(148, 163, 184, 0.25);
     }
+}
+
+/* Летающая «пачка» в простом меню при добавлении в корзину */
+.seller-pack-fly {
+    position: fixed;
+    z-index: 40;
+    pointer-events: none;
+    transition:
+        transform 0.9s cubic-bezier(0.19, 1, 0.22, 1),
+        opacity 0.9s ease-out;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.85));
+    transform-origin: center center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #facc15;
+    border: 1px solid #facc15;
+    color: #111827;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .cart-empty {
@@ -2007,7 +2055,7 @@ body.kiosk-body-lock {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: -4px; /* чуть опускаем бар, чтобы визуально убрать зазор снизу */
+    bottom: -30px; /* опускаем ещё ниже, чтобы закрыть остаток полосы снизу */
     padding: 8px 12px;
     background: linear-gradient(to top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.8));
     border-top: 1px solid rgba(148, 163, 184, 0.4);

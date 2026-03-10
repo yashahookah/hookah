@@ -1,10 +1,18 @@
 const state = {
   products: [],
   cart: window.posCart || (window.posCart = {}), // общая корзина с киоском
+  search: "",
 };
 
 let productsClickBound = false;
 let orderToastTimer = null;
+
+const RU_NAME_OVERRIDES = {
+  "2005 Blueberry": "Черничный кекс",
+  "Blackberry Lime": "Ежевика и лайм",
+  Blitzsturm: "Лаванда и мята",
+  "Cane Mint": "Мятные конфеты",
+};
 
 function showOrderToast(orderId) {
   const rootId = "order-toast";
@@ -58,6 +66,60 @@ function escapeHtml(s) {
   return div.innerHTML;
 }
 
+function shortenDescription(text, maxLen = 110) {
+  if (!text) return "";
+  const s = String(text).trim();
+  if (s.length <= maxLen) return s;
+  const cut = s.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  const base = lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return base.trim() + "…";
+}
+
+function buildRuName(product) {
+  const override = RU_NAME_OVERRIDES[product.name];
+  if (override) return override;
+  const desc = (product.description || "").trim();
+  if (!desc) return "";
+  let sentence = desc.split(/[.!?]/)[0] || desc;
+  sentence = sentence.split("—")[0] || sentence;
+  sentence = sentence.trim();
+  if (sentence.length > 40) {
+    const words = sentence.split(/\s+/).slice(0, 3);
+    sentence = words.join(" ");
+  }
+  return sentence;
+}
+
+function normalizeTextForSearch(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/ё/g, "е");
+}
+
+function productMatchesQuery(product, q) {
+  if (!q) return true;
+  const normQ = normalizeTextForSearch(q).trim();
+  if (!normQ) return true;
+
+  const haystack = normalizeTextForSearch(
+    [product.name, product.code, product.description, buildRuName(product)]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  const tokens = normQ.split(/\s+/).filter(Boolean);
+  return tokens.every((token) => {
+    // для русских слов делаем поиск по корню (убираем последний символ)
+    const isCyr = /[а-я]/.test(token);
+    let needle = token;
+    if (isCyr && token.length >= 4) {
+      needle = token.slice(0, token.length - 1);
+    }
+    return haystack.includes(needle);
+  });
+}
+
 async function fetchProducts() {
   const res = await fetch("/api/products");
   if (!res.ok) {
@@ -76,7 +138,11 @@ function renderProducts() {
 
   // сортируем по имени и разбиваем по группам A–Z
   const groups = {};
-  const sorted = [...state.products].sort((a, b) =>
+  const filtered = state.search
+    ? state.products.filter((p) => productMatchesQuery(p, state.search))
+    : state.products;
+
+  const sorted = [...filtered].sort((a, b) =>
     (a.name || "").localeCompare(b.name || "", "en")
   );
 
@@ -104,12 +170,20 @@ function renderProducts() {
 
     groups[letter].forEach((p) => {
       const qty = state.cart[p.id] || 0;
-      const desc = (p.description || "").trim();
+      const desc = shortenDescription(p.description || "", 110);
+      const ruName = buildRuName(p);
       const card = document.createElement("div");
       card.className = "product-card";
       card.innerHTML = `
+        <div class="product-card__name">
+          <span class="product-card__name-en">${escapeHtml(p.name)}</span>
+          ${
+            ruName
+              ? `<span class="product-card__name-ru">${escapeHtml(ruName)}</span>`
+              : ""
+          }
+        </div>
         ${desc ? `<div class="product-card__desc">${escapeHtml(desc)}</div>` : ""}
-        <div class="product-card__name">${escapeHtml(p.name)}</div>
         <div class="product-card__price">${p.price.toFixed(0)} ₽</div>
         <div class="product-card__stock">Остаток: ${p.quantity}</div>
         <div class="product-card__controls">
@@ -285,6 +359,15 @@ async function submitOrder() {
 
 document.addEventListener("DOMContentLoaded", () => {
   fetchProducts();
+
+  const searchInput = document.getElementById("seller-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      const value = e.target.value || "";
+      state.search = value;
+      renderProducts();
+    });
+  }
 
   const products = document.getElementById("products");
   if (products && !productsClickBound) {

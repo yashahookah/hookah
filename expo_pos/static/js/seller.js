@@ -467,13 +467,17 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
   const fly = document.createElement("div");
   fly.classList.add("seller-pack-fly");
   fly.style.left = `${cardRect.left}px`;
-  fly.style.top = `${cardRect.top + cardRect.height / 2 - 16}px`;
+  fly.style.top = `${cardRect.top + cardRect.height / 2 - 28}px`;
   fly.style.transform = "translate(0, 0) scale(1)";
   fly.style.opacity = "1";
   const accent = getAccentColorForProduct(product);
-  fly.style.background = accent;
-  fly.style.borderColor = accent;
-  fly.textContent = (product.name || "").toUpperCase();
+  fly.style.setProperty("--pack-accent", accent);
+  const safeName = escapeHtml(product.name || "");
+  fly.innerHTML = `
+    <div class="seller-pack-fly__pack">
+      <div class="seller-pack-fly__label">${safeName}</div>
+    </div>
+  `;
 
   document.body.appendChild(fly);
 

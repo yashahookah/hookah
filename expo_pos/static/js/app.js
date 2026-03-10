@@ -49,4 +49,39 @@
   if (btnKiosk) {
     btnKiosk.addEventListener("click", () => showView("kiosk"));
   }
+
+  function updateDeviceClass() {
+    try {
+      const w = window.innerWidth || document.documentElement.clientWidth || 0;
+      const h = window.innerHeight || document.documentElement.clientHeight || 0;
+      const minSide = Math.min(w, h);
+      const isTouch =
+        "ontouchstart" in window || (navigator && navigator.maxTouchPoints > 0);
+      let type = "desktop";
+      if (isTouch && minSide <= 640) {
+        type = "phone";
+      } else if (isTouch && minSide <= 1024) {
+        type = "tablet";
+      }
+      document.body.dataset.device = type;
+    } catch (e) {}
+  }
+
+  updateDeviceClass();
+  window.addEventListener("resize", updateDeviceClass);
+
+  // Блокируем zoom от дабл-тапа / быстрых тапов на iOS и мобильных
+  let lastTouchEnd = 0;
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false }
+  );
 })();
+

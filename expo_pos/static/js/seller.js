@@ -3,6 +3,8 @@ const state = {
   cart: window.posCart || (window.posCart = {}), // общая корзина с киоском
 };
 
+let productsClickBound = false;
+
 function escapeHtml(s) {
   if (!s) return "";
   const div = document.createElement("div");
@@ -78,17 +80,6 @@ function renderProducts() {
   });
 
   buildAlphaNav(letters);
-
-  container.addEventListener("click", (e) => {
-    const btn = e.target;
-    if (!btn.dataset || !btn.dataset.role) return;
-    const id = parseInt(btn.dataset.id, 10);
-    if (btn.dataset.role === "inc") {
-      addToCart(id, 1);
-    } else if (btn.dataset.role === "dec") {
-      addToCart(id, -1);
-    }
-  });
 }
 
 function buildAlphaNav(letters) {
@@ -242,6 +233,23 @@ async function submitOrder() {
 
 document.addEventListener("DOMContentLoaded", () => {
   fetchProducts();
+
+  const products = document.getElementById("products");
+  if (products && !productsClickBound) {
+    productsClickBound = true;
+    products.addEventListener("click", (e) => {
+      const btn = e.target;
+      if (!btn || !btn.dataset || !btn.dataset.role) return;
+      const id = parseInt(btn.dataset.id, 10);
+      if (!Number.isFinite(id)) return;
+      if (btn.dataset.role === "inc") {
+        addToCart(id, 1);
+      } else if (btn.dataset.role === "dec") {
+        addToCart(id, -1);
+      }
+    });
+  }
+
   document
     .getElementById("submit-order")
     .addEventListener("click", submitOrder);

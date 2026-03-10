@@ -149,11 +149,10 @@ body.view-seller-active .seller__products {
     top: 16px; /* корзина прилипает, верхнего бара нет */
 }
 
-/* A–Z боковой бар — при скролле фиксирован по центру устройства */
+/* A–Z боковой бар — при скролле прилипает к верху, без перекрытий */
 .seller-alpha-nav {
     position: sticky;
-    top: calc(50vh - 280px); /* fallback */
-    top: calc(50dvh - 280px); /* по центру устройства при листании */
+    top: 24px;
     align-self: stretch;
     flex-shrink: 0;
     width: 44px;

@@ -624,9 +624,9 @@ function kioskUpdateDescription() {
   let idx = kioskState.activeIndex;
   idx = ((idx % total) + total) % total;
   const p = products[idx];
-  const desc = (p.description || "").trim();
+  const rawDesc = (p.description || "").trim();
   const name = (p.name || "").trim();
-  if (!desc && !name) {
+  if (!rawDesc && !name) {
     el.innerHTML = "";
     el.style.display = "none";
     return;
@@ -649,9 +649,36 @@ function kioskUpdateDescription() {
         `</div>`
       : "";
 
+  // Строим заголовок вида "Cool Strawberry — засахаренная клубника"
+  let title = name;
+  let body = rawDesc;
+  if (rawDesc) {
+    let firstSentence = rawDesc.split(/[.!?]/)[0] || rawDesc;
+    firstSentence = firstSentence.split("—")[0] || firstSentence;
+    firstSentence = firstSentence.replace(
+      /^(Это|Это аромат|Аромат|Настоящий|Настоящая|Настоящее|Классический|Легендарный)\s+/i,
+      ""
+    );
+    firstSentence = firstSentence.trim();
+    if (firstSentence.length > 50) {
+      const words = firstSentence.split(/\s+/).slice(0, 4);
+      firstSentence = words.join(" ");
+    }
+    if (firstSentence) {
+      title = name ? `${name} — ${firstSentence}` : firstSentence;
+      const dotIdx = rawDesc.search(/[.!?]/);
+      body =
+        dotIdx >= 0 && dotIdx + 1 < rawDesc.length
+          ? rawDesc.slice(dotIdx + 1).trim()
+          : "";
+    }
+  }
+
   const html =
-    (name ? `<span class="kiosk-desc-name">${kioskEscape(name)}</span> ` : "") +
-    (desc ? kioskEscape(desc) : "") +
+    (title
+      ? `<span class="kiosk-desc-name">${kioskEscape(title)}</span> `
+      : "") +
+    (body ? kioskEscape(body) : "") +
     catsHtml;
 
   const dir = kioskState.lastDirection || 1;

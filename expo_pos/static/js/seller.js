@@ -11,7 +11,28 @@ const RU_NAME_OVERRIDES = {
   "2005 Blueberry": "Черничный кекс",
   "Blackberry Lime": "Ежевика и лайм",
   Blitzsturm: "Лаванда и мята",
-  "Cane Mint": "Мятные конфеты",
+  "Cane Mint": "Мятные леденцы",
+  Horchata: "Орчата, рисовый напиток",
+};
+
+// Алиасы для поиска: как люди пишут на слух по‑русски
+const SEARCH_ALIASES = {
+  "кейн минт": "Cane Mint",
+  "кане минт": "Cane Mint",
+  "кейнминт": "Cane Mint",
+  "канеминт": "Cane Mint",
+  "кэйн минт": "Cane Mint",
+  "кеин минт": "Cane Mint",
+
+  "блитцштурм": "Blitzsturm",
+  "блитзштурм": "Blitzsturm",
+  "блицштурм": "Blitzsturm",
+  "блиц шторм": "Blitzsturm",
+
+  орчата: "Horchata",
+  орчатта: "Horchata",
+  орчадо: "Horchata",
+  хорчата: "Horchata",
 };
 
 function showOrderToast(orderId) {
@@ -101,6 +122,12 @@ function productMatchesQuery(product, q) {
   if (!q) return true;
   const normQ = normalizeTextForSearch(q).trim();
   if (!normQ) return true;
+
+  // если запрос целиком совпадает с алиасом — жёстко матчим по имени
+  const aliasTarget = SEARCH_ALIASES[normQ];
+  if (aliasTarget) {
+    return product.name === aliasTarget;
+  }
 
   const haystack = normalizeTextForSearch(
     [product.name, product.code, product.description, buildRuName(product)]

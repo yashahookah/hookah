@@ -4,6 +4,52 @@ const state = {
 };
 
 let productsClickBound = false;
+let orderToastTimer = null;
+
+function showOrderToast(orderId) {
+  const rootId = "order-toast";
+  let root = document.getElementById(rootId);
+  if (!root) {
+    root = document.createElement("div");
+    root.id = rootId;
+    root.className = "order-toast";
+    root.innerHTML = `
+      <div class="order-toast__card">
+        <button type="button" class="order-toast__close" data-role="order-toast-close">×</button>
+        <div class="order-toast__title">Заказ оформлен</div>
+        <div class="order-toast__text">
+          Заказ № <span class="order-toast__number" data-role="order-toast-number"></span>
+          отправлен на сборку, запомните свой номер заказа.
+        </div>
+      </div>
+    `;
+    document.body.appendChild(root);
+    const closeBtn = root.querySelector("[data-role='order-toast-close']");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        root.classList.remove("order-toast--visible");
+        if (orderToastTimer) {
+          clearTimeout(orderToastTimer);
+          orderToastTimer = null;
+        }
+      });
+    }
+  }
+
+  const numEl = root.querySelector("[data-role='order-toast-number']");
+  if (numEl) {
+    numEl.textContent = orderId != null ? String(orderId) : "—";
+  }
+
+  root.classList.add("order-toast--visible");
+  if (orderToastTimer) {
+    clearTimeout(orderToastTimer);
+  }
+  orderToastTimer = setTimeout(() => {
+    root.classList.remove("order-toast--visible");
+    orderToastTimer = null;
+  }, 5000);
+}
 
 function escapeHtml(s) {
   if (!s) return "";
@@ -217,11 +263,17 @@ async function submitOrder() {
       throw new Error(data.detail || "Ошибка создания заказа");
     }
 
+    const data = await res.json().catch(() => ({}));
+    const orderId = data && typeof data.id === "number" ? data.id : null;
+
     Object.keys(state.cart).forEach((k) => delete state.cart[k]);
     await fetchProducts();
 
-    msgEl.textContent = "Заказ создан. Можно собирать.";
-    msgEl.className = "cart-message cart-message--ok";
+    msgEl.textContent = "";
+    msgEl.className = "cart-message";
+    if (orderId != null) {
+      showOrderToast(orderId);
+    }
   } catch (e) {
     console.error(e);
     msgEl.textContent = e.message || "Ошибка";

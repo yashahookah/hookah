@@ -925,12 +925,18 @@ async function kioskSubmitOrder() {
       throw new Error(data.detail || "Ошибка создания заказа");
     }
 
+    const data = await res.json().catch(() => ({}));
+    const orderId = data && typeof data.id === "number" ? data.id : null;
+
     Object.keys(kioskState.cart).forEach((k) => delete kioskState.cart[k]);
     await kioskFetchProducts();
     kioskCloseCart();
 
     const summaryText = document.getElementById("kiosk-summary-text");
     summaryText.textContent = "Заказ отправлен, подойдите к стойке";
+    if (orderId != null && typeof showOrderToast === "function") {
+      showOrderToast(orderId);
+    }
   } catch (e) {
     console.error(e);
     msgEl.textContent = e.message || "Ошибка";

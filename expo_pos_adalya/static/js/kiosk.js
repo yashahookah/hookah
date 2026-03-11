@@ -260,10 +260,10 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = 150; // компромисс: нужно уверенное, но не гигантское движение
+        const step = 130; // чуть быстрее: жест по-прежнему осознанный, но легче
         if (Math.abs(diff) < step) return;
         const now = Date.now();
-        if (now - kioskHaloLastChangeAt < 650) return;
+        if (now - kioskHaloLastChangeAt < 550) return;
         kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -521,10 +521,10 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 150; // колесу тоже даём «среднюю» чувствительность
+        const step = 130; // колесу тоже даём чуть более живую реакцию
         if (Math.abs(diff) < step) return;
         const now = Date.now();
-        if (now - kioskHaloLastChangeAt < 650) return;
+        if (now - kioskHaloLastChangeAt < 550) return;
         kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);

@@ -1,5 +1,5 @@
-# Конфигурация Amvera Cloud для Expo POS
-# Проект в подпапке expo_pos, сборка через Dockerfile в корне
+# Конфигурация Amvera Cloud для Expo POS Adalya
+# Проект в подпапке expo_pos_adalya, сборка через Dockerfile.adalya в корне
 
 meta:
   environment: docker
@@ -7,7 +7,7 @@ meta:
     name: docker
 
 build:
-  dockerfile: Dockerfile
+  dockerfile: Dockerfile.adalya
 
 run:
   persistenceMount: /data

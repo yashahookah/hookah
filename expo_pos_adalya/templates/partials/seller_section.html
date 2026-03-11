@@ -1,0 +1,30 @@
+<section class="seller" id="seller-root">
+    <div class="seller__layout">
+        <div class="seller__products">
+            <div class="seller-alpha-nav" aria-label="Быстрый переход по буквам">
+                <span class="seller-alpha-nav__label">A–Z</span>
+                <div class="seller-alpha-nav__track" id="seller-alpha-nav"></div>
+            </div>
+            <div class="seller__products-body">
+                <h2 class="section-title">Товары</h2>
+                <div class="seller-search">
+                    <input id="seller-search" class="seller-search__input" type="search" placeholder="Поиск по названию или описанию" autocomplete="off" />
+                </div>
+                <div id="products" class="products-grid"></div>
+            </div>
+        </div>
+        <div class="seller__cart">
+            <h2 class="section-title">Заказ</h2>
+            <div id="cart-empty" class="cart-empty">Добавьте пачки из списка</div>
+            <ul id="cart-items" class="cart-items"></ul>
+            <div class="cart-summary">
+                <div class="cart-summary__row">
+                    <span>Итого:</span>
+                    <span id="cart-total" class="cart-summary__total">0 ₽</span>
+                </div>
+                <button id="submit-order" class="primary-btn" disabled>Создать заказ</button>
+                <div id="cart-message" class="cart-message"></div>
+            </div>
+        </div>
+    </div>
+</section>

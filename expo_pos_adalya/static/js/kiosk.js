@@ -122,6 +122,7 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
+let kioskLastDeltaSign = 0;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -138,11 +139,14 @@ function kioskSetActiveIndex(nextIndex) {
 function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
-  // делаем отклик чуть легче, но всё ещё защищаемся от случайных двойных жестов
-  if (now - kioskLastChangeAt < 260) return;
+  const sign = delta > 0 ? 1 : -1;
+  // если два подряд вызова в одном и том же направлении приходят слишком быстро —
+  // считаем, что это продолжение одного свайпа и не перескакиваем ещё дальше
+  if (now - kioskLastChangeAt < 320 && sign === kioskLastDeltaSign) return;
 
   kioskLastChangeAt = now;
-  kioskSetActiveIndex(kioskState.activeIndex + delta);
+  kioskLastDeltaSign = sign;
+  kioskSetActiveIndex(kioskState.activeIndex + sign);
 }
 
 function kioskGetImageUrl(product) {
@@ -256,7 +260,7 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = 45; // правая половина — очень медленная прокрутка, но отклик чуть легче
+        const step = 55; // правая половина — медленная прокрутка, защищаемся от лишних срабатываний
         if (Math.abs(diff) < step) return;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -271,7 +275,7 @@ function kioskRenderSlides() {
         if (touchStartY == null) return;
         const endY = e.changedTouches[0].clientY;
         const diff = endY - touchStartY;
-        const threshold = 40;
+        const threshold = 50;
 
         if (touchSide === "left") {
           // левая половина — обычный свайп по пачке
@@ -514,7 +518,7 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 45; // ещё больше шаг — очень медленная прокрутка, но чуть легче
+        const step = 55; // ещё больше шаг — очень медленная прокрутка и защита от двойных срабатываний
         if (Math.abs(diff) < step) return;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);

@@ -260,8 +260,11 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = 120; // правая половина — нужно прям заметное движение
+        const step = 200; // правая половина — ещё медленнее, требуется большой жест
         if (Math.abs(diff) < step) return;
+        const now = Date.now();
+        if (now - kioskHaloLastChangeAt < 800) return;
+        kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         touchLastY = y;
@@ -518,8 +521,11 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 120; // ещё больше шаг — реально медленная прокрутка «колеса»
+        const step = 200; // ещё больше шаг — реально медленная прокрутка «колеса» справа
         if (Math.abs(diff) < step) return;
+        const now = Date.now();
+        if (now - kioskHaloLastChangeAt < 800) return;
+        kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         lastY = y;

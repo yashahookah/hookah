@@ -1284,7 +1284,7 @@ body.kiosk-body-lock {
     opacity: 1;
     /* заезжает так, чтобы в кадре была голова и верх тела,
        а остальная часть оставалась за пределами слева */
-    transform: translate(-38%, -50%) rotate(90deg);
+    transform: translate(-44%, -50%) rotate(90deg);
 }
 
 @media (max-width: 640px) {

@@ -1323,21 +1323,22 @@ body.kiosk-body-lock {
 /* ===== Адаптация под телефон (iPhone) ===== */
 @media (max-width: 640px) {
     .kiosk {
-        margin: 0 -8px;
+        margin: 0;
     }
 
     .kiosk__slides {
-        height: calc(100vh - 40px);
+        /* на мобильных занимаем всю видимую высоту, без «просветов» сверху/снизу */
+        height: 100dvh;
     }
 
     .kiosk-slide {
-        max-width: 420px;
+        max-width: 380px;
     }
 
     .kiosk-pack-visual {
-        max-width: 420px;
-        height: min(62vh, 420px);
-        margin-top: 20px;
+        max-width: 380px;
+        height: min(60dvh, 380px);
+        margin-top: 16px;
     }
 }
 

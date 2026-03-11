@@ -140,9 +140,9 @@ function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
   const sign = delta > 0 ? 1 : -1;
-  // если два подряд вызова в одном и том же направлении приходят слишком быстро —
-  // считаем, что это продолжение одного свайпа и не перескакиваем ещё дальше
-  if (now - kioskLastChangeAt < 320 && sign === kioskLastDeltaSign) return;
+  // сильно «притупляем» реакцию:
+  // один жест пальца = максимум один шаг примерно раз в 700мс
+  if (now - kioskLastChangeAt < 700 && sign === kioskLastDeltaSign) return;
 
   kioskLastChangeAt = now;
   kioskLastDeltaSign = sign;
@@ -218,14 +218,14 @@ function kioskRenderSlides() {
         const isRight = e.clientX >= midX;
         const delta = e.deltaY;
         if (!isRight) {
-          // левая половина экрана — обычный, более "тяжёлый" скролл
-          if (Math.abs(delta) < 40) return;
+          // левая половина экрана — обычный, но сильно замедленный скролл
+          if (Math.abs(delta) < 80) return;
           kioskChangeByDelta(delta > 0 ? 1 : -1);
         } else {
-          // правая половина — как наше колесо (медленный, но отдельный скролл)
-          if (Math.abs(delta) < 40) return;
+          // правая половина — «колесо»: тоже с большим порогом
+          if (Math.abs(delta) < 80) return;
           const now = Date.now();
-          if (now - kioskHaloLastChangeAt < 400) return;
+          if (now - kioskHaloLastChangeAt < 700) return;
           kioskHaloLastChangeAt = now;
           const direction = delta > 0 ? 1 : -1;
           kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -260,7 +260,7 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = 55; // правая половина — медленная прокрутка, защищаемся от лишних срабатываний
+        const step = 120; // правая половина — нужно прям заметное движение
         if (Math.abs(diff) < step) return;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -275,7 +275,7 @@ function kioskRenderSlides() {
         if (touchStartY == null) return;
         const endY = e.changedTouches[0].clientY;
         const diff = endY - touchStartY;
-        const threshold = 50;
+        const threshold = 90; // по центральной пачке — только длинный, осознанный свайп
 
         if (touchSide === "left") {
           // левая половина — обычный свайп по пачке
@@ -518,7 +518,7 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 55; // ещё больше шаг — очень медленная прокрутка и защита от двойных срабатываний
+        const step = 120; // ещё больше шаг — реально медленная прокрутка «колеса»
         if (Math.abs(diff) < step) return;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);

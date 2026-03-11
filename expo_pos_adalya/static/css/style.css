@@ -1182,12 +1182,12 @@ body.kiosk-body-lock {
 }
 
 .kiosk-slide--enter-from-left {
-    animation: kioskSlideEnterFromLeft 1.8s cubic-bezier(0.18, 0.9, 0.24, 1) both;
+    animation: kioskSlideEnterFromLeft 2.2s cubic-bezier(0.16, 0.82, 0.22, 1) both;
     z-index: 3;
 }
 
 .kiosk-slide--enter-from-right {
-    animation: kioskSlideEnterFromRight 1.8s cubic-bezier(0.18, 0.9, 0.24, 1) both;
+    animation: kioskSlideEnterFromRight 2.2s cubic-bezier(0.16, 0.82, 0.22, 1) both;
     z-index: 3;
 }
 

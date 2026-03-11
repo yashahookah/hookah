@@ -138,8 +138,8 @@ function kioskSetActiveIndex(nextIndex) {
 function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
-  // защита от слишком быстрого пролистывания при жестах по центральной пачке
-  if (now - kioskLastChangeAt < 350) return;
+  // делаем отклик чуть легче, но всё ещё защищаемся от случайных двойных жестов
+  if (now - kioskLastChangeAt < 260) return;
 
   kioskLastChangeAt = now;
   kioskSetActiveIndex(kioskState.activeIndex + delta);
@@ -256,7 +256,7 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = 60; // правая половина — очень медленная прокрутка
+        const step = 45; // правая половина — очень медленная прокрутка, но отклик чуть легче
         if (Math.abs(diff) < step) return;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -271,7 +271,7 @@ function kioskRenderSlides() {
         if (touchStartY == null) return;
         const endY = e.changedTouches[0].clientY;
         const diff = endY - touchStartY;
-        const threshold = 60;
+        const threshold = 40;
 
         if (touchSide === "left") {
           // левая половина — обычный свайп по пачке
@@ -514,7 +514,7 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 60; // ещё больше шаг — очень медленная прокрутка
+        const step = 45; // ещё больше шаг — очень медленная прокрутка, но чуть легче
         if (Math.abs(diff) < step) return;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);

@@ -68,7 +68,8 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     """Иконка сайта для браузера (/favicon.ico)."""
-    path = BASE_DIR / "static" / "img" / "favicon.svg"
+    # В проекте фавикон лежит в /static (без подпапки img).
+    path = BASE_DIR / "static" / "favicon.svg"
     return FileResponse(path)
 
 

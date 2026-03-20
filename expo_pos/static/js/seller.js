@@ -59,16 +59,10 @@ function sellerNormalizeFilenameKey(s) {
 }
 
 function sellerGetImageCandidates(product) {
-  const code = product && product.code ? String(product.code).trim() : "";
   const name = product && product.name ? String(product.name).trim() : "";
-  const out = [];
-  if (code) out.push(`/static/img/${code}.png`);
-  if (name) out.push(`/static/img/${encodeURIComponent(name)}.png`);
-  if (name) {
-    const key = sellerNormalizeFilenameKey(name);
-    if (key) out.push(`/static/img/${key}.png`);
-  }
-  return out;
+  if (!name) return ["/static/img/placeholder-pack.png"];
+  // Только точное совпадение с именем файла — никаких "подборов" альтернатив.
+  return [`/static/img/${encodeURIComponent(name)}.png`];
 }
 
 function sellerGetImageUrl(product) {
@@ -140,6 +134,8 @@ function shortenDescription(text, maxLen = 110) {
 }
 
 function buildRuName(product) {
+  // По ТЗ: названия показываем только на английском.
+  return "";
   const override = RU_NAME_OVERRIDES[product.name];
   if (override) return override;
   const desc = (product.description || "").trim();
@@ -382,6 +378,30 @@ async function fetchProducts() {
     return;
   }
   const data = await res.json();
+
+  // Сервер на 8011 может быть старым — перезаписываем display/description статическими данными.
+  try {
+    const ovRes = await fetch("/static/data/tng_products.json", {
+      cache: "no-store",
+    });
+    if (ovRes && ovRes.ok) {
+      const ovData = await ovRes.json();
+      const items = (ovData && ovData.items) || null;
+      if (items && typeof items === "object") {
+        data.forEach((p) => {
+          const key = p && p.name ? String(p.name).trim().toLowerCase() : "";
+          const ov = key && items[key] ? items[key] : null;
+          if (ov) {
+            p.display_name_en = ov.display_name_en || p.display_name_en || p.name;
+            p.description = ov.description || p.description;
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("TNG overrides apply failed", e);
+  }
+
   state.products = data;
   renderProducts();
   renderCart();
@@ -450,7 +470,8 @@ function renderProducts() {
         }
       }
 
-      const desc = bodyDesc ? shortenDescription(bodyDesc, 110) : "";
+      // Показываем полное описание (без сильного обрезания).
+      const desc = bodyDesc ? bodyDesc : "";
       const card = document.createElement("div");
       card.className = "product-card";
       const accentColor = getAccentColorForProduct(p);
@@ -458,7 +479,9 @@ function renderProducts() {
       card.classList.add("product-card--accent");
       card.innerHTML = `
         <div class="product-card__name">
-          <span class="product-card__name-en">${escapeHtml(p.name)}</span>
+            <span class="product-card__name-en">${escapeHtml(
+              p.display_name_en || p.name
+            )}</span>
           ${
             ruName
               ? `<span class="product-card__name-ru">${escapeHtml(ruName)}</span>`
@@ -506,18 +529,9 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
   img.src = (candidates && candidates[0]) || sellerGetImageUrl(product);
   img.alt = product.name || "";
   fly.appendChild(img);
-
-  if (img && candidates && candidates.length > 1) {
-    let idx = 0;
-    img.onerror = () => {
-      idx += 1;
-      if (idx < candidates.length) {
-        img.src = candidates[idx];
-      } else {
-        img.style.display = "none";
-      }
-    };
-  }
+  img.onerror = () => {
+    img.style.display = "none";
+  };
 
   const baseWidth = Math.min(cardRect.width, 180);
   const baseHeight = baseWidth * 1.4;
@@ -651,7 +665,7 @@ function renderCart() {
     li.className = "cart-item";
     li.innerHTML = `
       <div>
-        <div class="cart-item__name">${product.name}</div>
+        <div class="cart-item__name">${product.display_name_en || product.name}</div>
         <div class="cart-item__meta">${qty} × ${product.price.toFixed(
           0
         )} ₽</div>

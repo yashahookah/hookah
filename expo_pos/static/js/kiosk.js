@@ -206,6 +206,164 @@ const kioskAromaMeta = {
   },
 };
 
+function kioskBaseCode(code) {
+  if (!code) return "";
+  // В БД при коллизиях код дополняется суффиксом `-v2`, `-v3` и т.д.
+  // Для фонов используем базовую часть.
+  return String(code).replace(/-v\d+$/i, "");
+}
+
+function kioskGetAromaMetaByProduct(product) {
+  if (!product) return undefined;
+  const code = product.code ? String(product.code).trim() : "";
+  if (!code) return undefined;
+  return kioskAromaMeta[code] || kioskAromaMeta[kioskBaseCode(code)];
+}
+
+function kioskAutoBgMetaForProduct(product) {
+  const code = product && product.code ? String(product.code).trim().toLowerCase() : "";
+  const name = product && product.name ? String(product.name).trim().toLowerCase() : "";
+  const text = `${code} ${name}`.toLowerCase();
+
+  // Гастрономический аромат
+  if (text.includes("bacon")) {
+    return { bgClass: "kiosk-bg--gastronomic" };
+  }
+
+  // Миксы/фрукты
+  if (
+    text.includes("mixed") ||
+    text.includes("mix") ||
+    text.includes("melange") ||
+    text.includes("смеш")
+  ) {
+    return { bgClass: "kiosk-bg--mixed-fruit" };
+  }
+  if (text.includes("nectarine")) return { bgClass: "kiosk-bg--nectarine" };
+  if (text.includes("strawberry") || text.includes("berry") || text.includes("blueberry") || text.includes("blackberry")) {
+    return { bgClass: "kiosk-bg--berry-deep" };
+  }
+
+  // Цитрусы/лимонады
+  if (
+    text.includes("lemon") ||
+    text.includes("lime") ||
+    text.includes("orange") ||
+    text.includes("grapefruit") ||
+    text.includes("citrus") ||
+    text.includes("sunrise") ||
+    text.includes("soda")
+  ) {
+    return { bgClass: "kiosk-bg--citrus-bright" };
+  }
+
+  // Арбузы/кислые арбузы
+  if (text.includes("watermelon")) {
+    return text.includes("sour") ? { bgClass: "kiosk-bg--sour-watermelon" } : { bgClass: "kiosk-bg--watermelon" };
+  }
+
+  // Тропики
+  if (text.includes("mango") || text.includes("mang")) return { bgClass: "kiosk-bg--erics-mango" };
+  if (text.includes("peach") || text.includes("cobbler") || text.includes("iced tea")) return { bgClass: "kiosk-bg--juicy-peach" };
+  if (text.includes("pineapple") || text.includes("passinfruit") || text.includes("passionfruit")) {
+    return { bgClass: "kiosk-bg--tropical-punch" };
+  }
+
+  // Мята/травы
+  if (text.includes("wintergreen") || text.includes("mint") || text.includes("зел") || text.includes("green")) {
+    return { bgClass: "kiosk-bg--wintergreen" };
+  }
+  if (text.includes("cane-mint") || text.includes("cane mint")) return { bgClass: "kiosk-bg--cane-mint" };
+  if (text.includes("cucumber") || text.includes("lavender")) return { bgClass: "kiosk-bg--cucumber-lavender" };
+  if (text.includes("cilantro") || text.includes("coriander") || text.includes("basil")) {
+    return { bgClass: "kiosk-bg--mint-herbal" };
+  }
+
+  // Чай/пряности
+  if (text.includes("chai") || text.includes("tea")) return { bgClass: "kiosk-bg--tea-aromatic" };
+  if (text.includes("kashmir") || text.includes("spice") || text.includes("cinnamon")) return { bgClass: "kiosk-bg--kashmir" };
+
+  // Гастро-десертные/печеньки/тесто
+  if (text.includes("cookie") || text.includes("dough") || text.includes("cereal") || text.includes("breakfast")) {
+    return { bgClass: "kiosk-bg--dessert-creamy" };
+  }
+
+  // Закаты/темные миксы (как дефолт)
+  if (text.includes("sunset") || text.includes("muerte")) return { bgClass: "kiosk-bg--cosmic-dark" };
+
+  return { bgClass: "kiosk-bg--berry-deep" };
+}
+
+function kioskFallbackDescription(productName) {
+  if (!productName) return "";
+  const t = String(productName).trim().toLowerCase();
+
+  if (t.includes("bacon")) {
+    return "Запеченный бекон: тёплый дымный гастрономический вкус с приятной солоноватой ноткой. Даёт ощущение «с кухни» и добавляет плотную основу миксам.";
+  }
+  if (t.includes("basil") && t.includes("strawberry")) {
+    return "Клубника с травяной глубиной базилика. Сладость ягод мягко уравновешивается свежей зеленью и оставляет чистое, аккуратное послевкусие.";
+  }
+  if (t.includes("blueberry") && t.includes("grapefruit")) {
+    return "Черника и грейпфрут: ягодная сладость встречает бодрую цитрусовую кислинку. Вкус яркий и свежий, запоминается с первой затяжки.";
+  }
+  if (t.includes("chai")) {
+    return "Chai — тёплый пряный чайный вкус с мягкой сладостью. Композиция раскрывается как уютный аромат специй и легко ложится в миксы.";
+  }
+  if (t.includes("cilantro") || t.includes("coriander") || t.includes("кинза")) {
+    return "Кинза: сочная травяная нота и лёгкая пикантность. Вкус свежий, зелёный и хорошо сочетается с цитрусами и ягодами.";
+  }
+  if ((t.includes("cookie") && t.includes("dough")) || t.includes("cookie dough") || t.includes("доу")) {
+    return "Cookie Dough — тёплое сливочное тесто и сладкое печенье. Комфортная гастрономическая сладость делает миксы насыщенными и «домашними».";
+  }
+  if (t.includes("it's like that one") || t.includes("breakfast") || t.includes("cereal") || t.includes("завтрак")) {
+    return "Завтрак в стиле «как тот самый»: овсяные нотки, мягкая выпечная сладость и бодрый цитрусовый акцент. Лёгкий вкус, который приятно «включает» с первой затяжки.";
+  }
+  if (t.includes("mango") && t.includes("fling")) {
+    return "Mango Fling — сочный манго с фруктовым драйвом и лёгкой кислинкой. Вкус тропический, яркий и очень бодрый.";
+  }
+  if (t.includes("mango")) {
+    return "Манго: спелая тропическая сладость и мягкая кислинка. Сочный вкус, который раскрывается легко и оставляет приятное послевкусие.";
+  }
+  if (t === "mixed" || t.includes("mixed fruit") || t.includes("mixed")) {
+    return "Классический фруктовый микс: сладкие ягоды и сочные фрукты в одном направлении. Баланс держится на насыщенном вкусе и аккуратном послевкусии.";
+  }
+  if (t.includes("muerte")) {
+    return "Muerte — тёмный, глубокий микс с ягодной сочностью и пряной атмосферой. Вкус плотный, «бархатный» и долго остаётся в памяти.";
+  }
+  if (t.includes("papa's f") || (t.includes("papa") && t.includes("foreplay")) || t.includes("foreplay")) {
+    return "Papa's F / Foreplay: мягкая фруктовая сладость с тропическим акцентом. Вкус живой, лёгкий и хорошо работает как база для миксов.";
+  }
+  if (t.includes("passinfruit") || t.includes("passionfruit")) {
+    return "Passionfruit / Passinfruit Lemonade: маракуйя и лимонад — тропическая кислинка, пузырьковая свежесть и сладкое послевкусие.";
+  }
+  if (t.includes("rangoon") && t.includes("sunrise")) {
+    return "Rangoon Sunrise: яркая цитрусовая композиция с мягкой сладостью. Вкус солнечный, бодрый и очень «утренний».";
+  }
+  if (t.includes("static starlight") && (t.includes("зелен") || t.includes("green"))) {
+    return "Static Starlight (зелёный): холодная травяная свежесть и лёгкая мятная глубина. Чистый, прохладный и эффектный вкус.";
+  }
+  if (t.includes("static starlight") || t.includes("starlight")) {
+    return "Static Starlight: тёмный космический микс с прохладным характером и мягким сладким завершением.";
+  }
+  if (t === "sunrise") {
+    return "Sunrise — свежий рассвет: цитрусовая яркость и мягкая сладость без резкости. Лёгкий вкус, который заряжает энергией.";
+  }
+  if (t === "sunset") {
+    return "Sunset — закат: тропическая фруктовая волна с тёплым, мягким послевкусием. Сочный вкус, который приятно тянется до конца.";
+  }
+
+  return "";
+}
+
+function kioskGetMetaForProduct(product) {
+  const direct = kioskGetAromaMetaByProduct(product);
+  if (direct && direct.bgClass) return direct;
+  const auto = kioskAutoBgMetaForProduct(product);
+  if (auto && auto.bgClass) return auto;
+  return { bgClass: "kiosk-bg--berry-deep" };
+}
+
 // Категории вкусов по фону (Сладкий / Кислый / Пряный / Свежий)
 // Можно тонко подстроить под реальные ощущения от ароматов.
 const kioskCategoriesByBg = {
@@ -262,6 +420,8 @@ const kioskCategoriesByBg = {
   "kiosk-bg--blackberry-lime": ["Сладкий", "Кислый"],
   "kiosk-bg--blitzsturm": ["Свежий", "Пряный"],
   "kiosk-bg--maraschino-cherry": ["Сладкий", "Пряный"],
+  // гастрономический
+  "kiosk-bg--gastronomic": ["Гастрономический"],
 };
 
 // Цвет текста описания — светлый на тёмной базе фонов (#020617)
@@ -305,6 +465,7 @@ const kioskLabelColorByBg = {
   "kiosk-bg--cosmic-dark": "#f8fafc",
   "kiosk-bg--exotic-dark": "#f8fafc",
   "kiosk-bg--maraschino-cherry": "#fef3c7",
+  "kiosk-bg--gastronomic": "#fefce8",
 };
 
 function kioskPlayAddToCartAnimation() {
@@ -382,37 +543,18 @@ function kioskChangeByDelta(delta) {
 }
 
 function kioskGetImageUrl(product) {
-  // Привязываем изображения к коду товара.
-  // Ожидаемые файлы:
-  // /static/img/sunrise.png
-  // /static/img/orange-soda.png
-  // /static/img/wintergreen.png
-  if (!product.code) return "/static/img/placeholder-pack.png";
-  return `/static/img/${product.code}.png`;
-}
-
-function kioskNormalizeFilenameKey(s) {
-  if (!s) return "";
-  return String(s)
-    .trim()
-    .toLowerCase()
-    .replace(/[’']/g, "") // убираем апостроф
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+  // Картинка берётся строго по текущим именам файлов в `static/img`.
+  // Если файлов нет — покажется placeholder (а затем можно будет скрыть/починить).
+  const name = product && product.name ? String(product.name).trim() : "";
+  if (!name) return "/static/img/placeholder-pack.png";
+  return `/static/img/${encodeURIComponent(name)}.png`;
 }
 
 function kioskGetImageCandidates(product) {
-  const code = product && product.code ? String(product.code).trim() : "";
   const name = product && product.name ? String(product.name).trim() : "";
-  const out = [];
-  if (code) out.push(`/static/img/${code}.png`);
-  if (name) out.push(`/static/img/${encodeURIComponent(name)}.png`);
-  if (name) {
-    const key = kioskNormalizeFilenameKey(name);
-    if (key) out.push(`/static/img/${key}.png`);
-  }
-  return out;
+  if (!name) return ["/static/img/placeholder-pack.png"];
+  // Только точное совпадение с именем файла — никаких "подборов" и переобрезок.
+  return [`/static/img/${encodeURIComponent(name)}.png`];
 }
 
 async function kioskFetchProducts() {
@@ -423,6 +565,31 @@ async function kioskFetchProducts() {
     return;
   }
     const data = await res.json();
+
+    // Важно: сервер на 8011 может быть старым по логике (мы не можем его убить).
+    // Поэтому перезаписываем display/description данными из статического JSON.
+    try {
+      const ovRes = await fetch("/static/data/tng_products.json", {
+        cache: "no-store",
+      });
+      if (ovRes && ovRes.ok) {
+        const ovData = await ovRes.json();
+        const items = (ovData && ovData.items) || null;
+        if (items && typeof items === "object") {
+          data.forEach((p) => {
+            const key = p && p.name ? String(p.name).trim().toLowerCase() : "";
+            const ov = key && items[key] ? items[key] : null;
+            if (ov) {
+              p.display_name_en = ov.display_name_en || p.display_name_en || p.name;
+              p.description = ov.description || p.description;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("TNG overrides apply failed", e);
+    }
+
     // сортируем пачки по имени, чтобы иерархия была логичной
     kioskState.products = data.sort((a, b) =>
       (a.name || "").localeCompare(b.name || "", "ru")
@@ -441,15 +608,36 @@ function kioskRenderSlides() {
   kioskState.products.forEach((p) => {
     const slide = document.createElement("section");
     slide.className = "kiosk-slide";
-    const aromaMeta = p.code ? kioskAromaMeta[p.code] : undefined;
+    const aromaMeta = kioskGetMetaForProduct(p);
     if (aromaMeta) {
-      slide.classList.add("kiosk-aroma", aromaMeta.themeClass);
+      slide.classList.add("kiosk-aroma");
+      if (aromaMeta.themeClass) slide.classList.add(aromaMeta.themeClass);
     }
     const candidates = kioskGetImageCandidates(p);
     const initialSrc =
       (candidates && candidates[0]) || kioskGetImageUrl(p) || "/static/img/placeholder-pack.png";
+
+    const bgClass = aromaMeta && aromaMeta.bgClass ? aromaMeta.bgClass : "kiosk-bg--berry-deep";
+    const cats = kioskCategoriesByBg[bgClass] || ["Сладкий"];
+    const catsHtml = cats
+      .map((c) => `<span class="kiosk-desc-tag">${kioskEscape(c)}</span>`)
+      .join("");
+    let textColor =
+      bgClass === "kiosk-bg--mixed-fruit" || bgClass === "kiosk-bg--nectarine"
+        ? "#0f172a"
+        : kioskLabelColorByBg[bgClass] || "#f8fafc";
+    const desc = ((p.description || "").trim() || kioskFallbackDescription(p.name)).trim();
+
     slide.innerHTML = `
       <div class="kiosk-slide-inner">
+        <div class="kiosk-slide-caption" style="color:${textColor}">
+          <div class="kiosk-slide-caption__name">${kioskEscape(
+            p.display_name_en || p.name || ""
+          )}</div>
+          ${desc ? `<div class="kiosk-slide-caption__desc">${kioskEscape(desc)}</div>` : ""}
+          ${catsHtml ? `<div class="kiosk-desc-tags kiosk-slide-caption__tags">${catsHtml}</div>` : ""}
+        </div>
+
         <div class="kiosk-slide-main">
           <div class="kiosk-pack-visual">
             <img class="kiosk-pack-img" src="${initialSrc}" alt="${(p.name || "").replace(/"/g, "&quot;")}" />
@@ -459,18 +647,11 @@ function kioskRenderSlides() {
     `;
     container.appendChild(slide);
 
-    // Если картинки переименовали (например, по имени вместо code),
-    // пробуем альтернативные src по onerror.
     const imgEl = slide.querySelector(".kiosk-pack-img");
-    if (imgEl && candidates && candidates.length > 1) {
-      let idx = 0;
+    if (imgEl) {
       imgEl.onerror = () => {
-        idx += 1;
-        if (idx < candidates.length) {
-          imgEl.src = candidates[idx];
-        } else {
-          imgEl.style.display = "none";
-        }
+        // Если файл всё равно не нашёлся — скрываем пустую карточку.
+        imgEl.style.display = "none";
       };
     }
   });
@@ -585,7 +766,7 @@ function kioskApplyAromaBackground() {
   let idx = kioskState.activeIndex;
   idx = ((idx % total) + total) % total;
   const active = products[idx];
-  const meta = active && active.code ? kioskAromaMeta[active.code] : undefined;
+  const meta = kioskGetMetaForProduct(active);
 
   // базовый класс
   root.className = "kiosk";
@@ -661,88 +842,10 @@ function kioskEscape(s) {
 }
 
 function kioskUpdateDescription() {
+  // Мы показываем описание/расшифровку только в caption под "лицевой" пачкой.
+  // Фиксированный блок #kiosk-description отключаем, чтобы не было дублей и “хвостов” от предыдущих ароматов.
   const el = document.getElementById("kiosk-description");
-  if (!el) return;
-  const products = kioskState.products;
-  if (!products.length) {
-    el.innerHTML = "";
-    el.style.display = "none";
-    return;
-  }
-  const total = products.length;
-  let idx = kioskState.activeIndex;
-  idx = ((idx % total) + total) % total;
-  const p = products[idx];
-  const desc = (p.description || "").trim();
-  const name = (p.name || "").trim();
-  if (!desc && !name) {
-    el.innerHTML = "";
-    el.style.display = "none";
-    return;
-  }
-  const meta = p.code ? kioskAromaMeta[p.code] : undefined;
-  const bgClass = meta && meta.bgClass ? meta.bgClass : "kiosk-bg--berry-deep";
-  let textColor;
-  if (
-    bgClass === "kiosk-bg--mixed-fruit" ||
-    bgClass === "kiosk-bg--nectarine"
-  ) {
-    textColor = "#0f172a";
-  } else {
-    textColor = kioskLabelColorByBg[bgClass] || "#f8fafc";
-  }
-
-  const cats = kioskCategoriesByBg[bgClass] || ["Сладкий"];
-
-  const catsHtml =
-    cats && cats.length
-      ? `<div class="kiosk-desc-tags">` +
-        cats
-          .map(
-            (c) =>
-              `<span class="kiosk-desc-tag">${kioskEscape(c)}</span>`
-          )
-          .join("") +
-        `</div>`
-      : "";
-  const html =
-    (name
-      ? `<span class="kiosk-desc-name">${kioskEscape(name)}</span> `
-      : "") +
-    (desc ? kioskEscape(desc) : "") +
-    catsHtml;
-
-  const dir = kioskState.lastDirection || 1;
-  const doUpdate = () => {
-    el.innerHTML = html;
-    el.style.display = "block";
-    el.style.color = textColor;
-    el.classList.remove("kiosk-desc-out", "kiosk-desc-out--next", "kiosk-desc-out--prev");
-    el.classList.remove("kiosk-desc-in", "kiosk-desc-in--next", "kiosk-desc-in--prev");
-    el.classList.add("kiosk-desc-in", dir === 1 ? "kiosk-desc-in--next" : "kiosk-desc-in--prev");
-    setTimeout(() => {
-      el.classList.remove("kiosk-desc-in", "kiosk-desc-in--next", "kiosk-desc-in--prev");
-    }, 800);
-  };
-
-  const prevName = el.querySelector(".kiosk-desc-name");
-  const prevNameText = prevName ? prevName.textContent : "";
-  if (prevNameText && prevNameText !== name) {
-    // Клонируем старый текст — сначала вставляем в DOM, потом добавляем классы, чтобы transition сработал
-    const clone = el.cloneNode(true);
-    clone.id = "";
-    clone.classList.remove("kiosk-desc-in", "kiosk-desc-in--next", "kiosk-desc-in--prev");
-    clone.classList.add("kiosk-desc-clone");
-    clone.style.zIndex = "10";
-    document.body.appendChild(clone);
-    clone.offsetHeight; // reflow: клон отрендерен в исходной позиции
-    clone.classList.add("kiosk-desc-out", dir === 1 ? "kiosk-desc-out--next" : "kiosk-desc-out--prev");
-    setTimeout(() => clone.remove(), 750);
-
-    doUpdate();
-  } else {
-    doUpdate();
-  }
+  if (el) el.style.display = "none";
 }
 
 function kioskUpdateAromaHalo() {
@@ -789,7 +892,7 @@ function kioskUpdateAromaHalo() {
     const horizontalShift = isMobile ? 64 : 76;
     el.style.transform = `translate(${x + horizontalShift}px, ${y}px)`;
     const labelSrc = p.code ? kioskLabelImages[p.code] : undefined;
-    const safeName = p.name || p.code || "";
+    const safeName = p.display_name_en || p.name || p.code || "";
     const labelHtml = labelSrc
       ? `
           <img
@@ -1041,9 +1144,8 @@ document.addEventListener("DOMContentLoaded", () => {
         toast.className = "kiosk-fab-toast";
         document.body.appendChild(toast);
       }
-      const label = active.name || active.code || "пачка";
-      const meta =
-        active && active.code ? kioskAromaMeta[active.code] : undefined;
+      const label = active.display_name_en || active.name || active.code || "пачка";
+      const meta = kioskGetMetaForProduct(active);
       let nameColor = "#facc15";
       if (meta && meta.bgClass && kioskLabelColorByBg[meta.bgClass]) {
         nameColor = kioskLabelColorByBg[meta.bgClass];

@@ -1213,9 +1213,10 @@ body.kiosk-body-lock {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: space-between;
+    justify-content: flex-start;
     background: transparent;
     color: inherit;
+    position: relative;
 }
 
 .kiosk-slide-tag {
@@ -1229,6 +1230,57 @@ body.kiosk-body-lock {
     align-items: center;
     gap: 16px;
     height: 100%;
+    justify-content: center;
+    flex: 1;
+}
+
+.kiosk-slide-caption {
+    margin-top: 10px;
+    padding: 0 14px;
+    width: min(90vw, 420px);
+    text-align: center;
+    pointer-events: none;
+    display: none;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+}
+
+.kiosk-slide-caption__name {
+    font-family: "Caveat", "Patrick Hand", cursive;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.kiosk-slide--pos0 .kiosk-slide-caption {
+    display: block;
+}
+
+.kiosk-slide-caption__desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: inherit;
+    opacity: 0.95;
+    margin-bottom: 4px;
+}
+
+.kiosk-slide-caption__tags .kiosk-desc-tags {
+    margin-top: 0;
+}
+
+.kiosk-slide--pos0 .kiosk-slide-caption,
+.kiosk-slide--pos1 .kiosk-slide-caption,
+.kiosk-slide--pos2 .kiosk-slide-caption,
+.kiosk-slide--pos-1 .kiosk-slide-caption,
+.kiosk-slide--pos-2 .kiosk-slide-caption {
+    display: none;
+}
+.kiosk-slide--pos0 .kiosk-slide-caption {
+    display: block;
 }
 
 .kiosk-header {
@@ -1332,8 +1384,12 @@ body.kiosk-body-lock {
     height: 100%;
     object-fit: contain;
     display: block;
-    /* возвращаем точную "щётку" по центру пачки */
-    clip-path: inset(37% 9% 37% 9% round 22px);
+    /* 
+       Режем фон у упаковки:
+       - по бокам чуть-чуть (чтобы не терять форму)
+       - сверху/снизу сильно (чтобы убрать верх/низ с фоном)
+    */
+    clip-path: inset(36% 2% 36% 2% round 22px);
     /* делаем саму пачку сочнее, но без лишнего белого прямоугольника */
     filter: contrast(1.04) saturate(1.06);
     box-shadow:
@@ -1467,6 +1523,21 @@ body.kiosk-body-lock {
             #020617 14px,
             #030712 14px,
             #030712 30px
+        );
+}
+
+/* Bacon / гастрономический — тёплый карамельно-копчёный фон */
+.kiosk.kiosk-bg--gastronomic::before {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(251, 146, 60, 0.35), transparent 55%),
+        radial-gradient(circle at 85% 80%, rgba(245, 158, 11, 0.30), transparent 60%),
+        radial-gradient(circle at 50% 100%, rgba(244, 63, 94, 0.18), transparent 70%),
+        repeating-linear-gradient(
+            155deg,
+            #020617 0,
+            #020617 12px,
+            #030712 12px,
+            #030712 28px
         );
 }
 

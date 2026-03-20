@@ -47,9 +47,34 @@ const SEARCH_ALIASES = {
   ерик: "Eric's Mango",
 };
 
+function sellerNormalizeFilenameKey(s) {
+  if (!s) return "";
+  return String(s)
+    .trim()
+    .toLowerCase()
+    .replace(/[’']/g, "") // убираем апостроф
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function sellerGetImageCandidates(product) {
+  const code = product && product.code ? String(product.code).trim() : "";
+  const name = product && product.name ? String(product.name).trim() : "";
+  const out = [];
+  if (code) out.push(`/static/img/${code}.png`);
+  if (name) out.push(`/static/img/${encodeURIComponent(name)}.png`);
+  if (name) {
+    const key = sellerNormalizeFilenameKey(name);
+    if (key) out.push(`/static/img/${key}.png`);
+  }
+  return out;
+}
+
 function sellerGetImageUrl(product) {
-  if (!product || !product.code) return "/static/img/placeholder-pack.png";
-  return `/static/img/${product.code}.png`;
+  const candidates = sellerGetImageCandidates(product);
+  if (candidates && candidates.length) return candidates[0];
+  return "/static/img/placeholder-pack.png";
 }
 
 function showOrderToast(orderId) {
@@ -472,14 +497,27 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
   const cardRect = cardEl.getBoundingClientRect();
   const targetRect = targetEl.getBoundingClientRect();
 
-  // Летит именно упаковка, как в киоске
+  // Летит именно упаковка, как в киоске (с фолбэком по имени файла)
   const fly = document.createElement("div");
   fly.classList.add("kiosk-pack-fly");
   const img = document.createElement("img");
   img.className = "kiosk-pack-img";
-  img.src = sellerGetImageUrl(product);
+  const candidates = sellerGetImageCandidates(product);
+  img.src = (candidates && candidates[0]) || sellerGetImageUrl(product);
   img.alt = product.name || "";
   fly.appendChild(img);
+
+  if (img && candidates && candidates.length > 1) {
+    let idx = 0;
+    img.onerror = () => {
+      idx += 1;
+      if (idx < candidates.length) {
+        img.src = candidates[idx];
+      } else {
+        img.style.display = "none";
+      }
+    };
+  }
 
   const baseWidth = Math.min(cardRect.width, 180);
   const baseHeight = baseWidth * 1.4;

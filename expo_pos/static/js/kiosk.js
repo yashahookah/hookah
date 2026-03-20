@@ -391,6 +391,30 @@ function kioskGetImageUrl(product) {
   return `/static/img/${product.code}.png`;
 }
 
+function kioskNormalizeFilenameKey(s) {
+  if (!s) return "";
+  return String(s)
+    .trim()
+    .toLowerCase()
+    .replace(/[’']/g, "") // убираем апостроф
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function kioskGetImageCandidates(product) {
+  const code = product && product.code ? String(product.code).trim() : "";
+  const name = product && product.name ? String(product.name).trim() : "";
+  const out = [];
+  if (code) out.push(`/static/img/${code}.png`);
+  if (name) out.push(`/static/img/${encodeURIComponent(name)}.png`);
+  if (name) {
+    const key = kioskNormalizeFilenameKey(name);
+    if (key) out.push(`/static/img/${key}.png`);
+  }
+  return out;
+}
+
 async function kioskFetchProducts() {
   try {
     const res = await fetch("/api/products");
@@ -421,18 +445,34 @@ function kioskRenderSlides() {
     if (aromaMeta) {
       slide.classList.add("kiosk-aroma", aromaMeta.themeClass);
     }
+    const candidates = kioskGetImageCandidates(p);
+    const initialSrc =
+      (candidates && candidates[0]) || kioskGetImageUrl(p) || "/static/img/placeholder-pack.png";
     slide.innerHTML = `
       <div class="kiosk-slide-inner">
         <div class="kiosk-slide-main">
           <div class="kiosk-pack-visual">
-            <img class="kiosk-pack-img" src="${kioskGetImageUrl(
-              p
-            )}" alt="${(p.name || "").replace(/"/g, "&quot;")}" />
+            <img class="kiosk-pack-img" src="${initialSrc}" alt="${(p.name || "").replace(/"/g, "&quot;")}" />
           </div>
         </div>
       </div>
     `;
     container.appendChild(slide);
+
+    // Если картинки переименовали (например, по имени вместо code),
+    // пробуем альтернативные src по onerror.
+    const imgEl = slide.querySelector(".kiosk-pack-img");
+    if (imgEl && candidates && candidates.length > 1) {
+      let idx = 0;
+      imgEl.onerror = () => {
+        idx += 1;
+        if (idx < candidates.length) {
+          imgEl.src = candidates[idx];
+        } else {
+          imgEl.style.display = "none";
+        }
+      };
+    }
   });
 
   if (!kioskScrollInitialized) {

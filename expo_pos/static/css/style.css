@@ -1242,7 +1242,7 @@ body.kiosk-body-lock {
     pointer-events: none;
     display: none;
     position: absolute;
-    top: 6px;
+    top: -52px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;

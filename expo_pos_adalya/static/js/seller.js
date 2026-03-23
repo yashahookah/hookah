@@ -25,6 +25,11 @@ const ADALYA_PACK_IMAGES = {
   citrus_mix: "/static/img/labels/Orange.png",
   kaktus: "/static/img/labels/Cactus.png",
   lemon_pie: "/static/img/labels/Lemon%20Pie.png",
+  berrymix: "/static/img/labels/Berrymix.png",
+  mango_tango: "/static/img/labels/Mango%20Tango.png",
+  strawberry: "/static/img/labels/Strawberry.png",
+  mint: "/static/img/labels/Mint.png",
+  ice: "/static/img/labels/Ice.png",
 };
 
 // Алиасы для поиска: как люди пишут на слух по‑русски

@@ -98,6 +98,11 @@ def init_db():
             {"name": "Цитрусовый микс", "code": "citrus_mix", "price": 3000.0, "quantity": 50},
             {"name": "Кактус", "code": "kaktus", "price": 3000.0, "quantity": 50},
             {"name": "Лимонный пирог", "code": "lemon_pie", "price": 3000.0, "quantity": 50},
+            {"name": "Ягодный микс", "code": "berrymix", "price": 3000.0, "quantity": 50},
+            {"name": "Манго Танго", "code": "mango_tango", "price": 3000.0, "quantity": 50},
+            {"name": "Клубника", "code": "strawberry", "price": 3000.0, "quantity": 50},
+            {"name": "Мята", "code": "mint", "price": 3000.0, "quantity": 50},
+            {"name": "Лёд", "code": "ice", "price": 3000.0, "quantity": 50},
         ]
 
         for idx, p in enumerate(sample_products):

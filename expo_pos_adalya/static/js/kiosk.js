@@ -26,6 +26,11 @@ const kioskLabelImages = {
   citrus_mix: "/static/img/labels/Orange.png",
   kaktus: "/static/img/labels/Cactus.png",
   lemon_pie: "/static/img/labels/Lemon%20Pie.png",
+  berrymix: "/static/img/labels/Berrymix.png",
+  mango_tango: "/static/img/labels/Mango%20Tango.png",
+  strawberry: "/static/img/labels/Strawberry.png",
+  mint: "/static/img/labels/Mint.png",
+  ice: "/static/img/labels/Ice.png",
 };
 
 // Дополнительный декор / фон для ароматов — для Adalya делаем свои фоны
@@ -50,6 +55,21 @@ const kioskAromaMeta = {
   },
   kaktus: {
     bgClass: "kiosk-bg--adalya-cactus",
+  },
+  berrymix: {
+    bgClass: "kiosk-bg--adalya-love66",
+  },
+  mango_tango: {
+    bgClass: "kiosk-bg--adalya-banana-ice",
+  },
+  strawberry: {
+    bgClass: "kiosk-bg--adalya-ledy-killer",
+  },
+  mint: {
+    bgClass: "kiosk-bg--adalya-cactus",
+  },
+  ice: {
+    bgClass: "kiosk-bg--adalya-milk",
   },
   // Lemon Pie — поддерживаем несколько вариантов кода
   lemon_pie: {

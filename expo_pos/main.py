@@ -1032,6 +1032,8 @@ def list_products(db: Session = Depends(get_db)):
             display_name_en = "Muerte por Arroz"
         elif code_key in {"mixed", "mixed-fruit"} or name_key == "mixed":
             display_name_en = "Mixed Fruit"
+        elif code_key in {"papas-f", "papas-foreplay"} or name_key in {"papa's f", "papas f"}:
+            display_name_en = "Papa's Foreplay"
         csv_desc = tng_info.get("description") or ""
         # Если в CSV есть описание — используем его (это и есть "фулл список").
         final_desc = csv_desc.strip() or desc

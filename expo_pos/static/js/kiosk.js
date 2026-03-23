@@ -858,6 +858,14 @@ function kioskCanonicalDisplayNameEn(product) {
   if (code === "mixed" || code === "mixed-fruit" || name === "mixed") {
     return "Mixed Fruit";
   }
+  if (
+    code === "papas-f" ||
+    code === "papas-foreplay" ||
+    name === "papa's f" ||
+    name === "papas f"
+  ) {
+    return "Papa's Foreplay";
+  }
   return disp || (product && product.name) || "";
 }
 

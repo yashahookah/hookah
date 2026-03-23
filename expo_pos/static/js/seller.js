@@ -61,6 +61,10 @@ const SEARCH_ALIASES = {
   микс: "Mixed Fruit",
   "mixed fruit": "Mixed Fruit",
   "микс фрукт": "Mixed Fruit",
+  "papa s f": "Papa's Foreplay",
+  "papas f": "Papa's Foreplay",
+  "папас ф": "Papa's Foreplay",
+  "папа ф": "Papa's Foreplay",
 };
 
 function sellerNormalizeFilenameKey(s) {
@@ -178,6 +182,14 @@ function canonicalDisplayNameEn(product) {
   }
   if (code === "mixed" || code === "mixed fruit" || name === "mixed") {
     return "Mixed Fruit";
+  }
+  if (
+    code === "papas-f" ||
+    code === "papas foreplay" ||
+    name === "papa's f" ||
+    name === "papas f"
+  ) {
+    return "Papa's Foreplay";
   }
   return disp || (product && product.name) || "";
 }

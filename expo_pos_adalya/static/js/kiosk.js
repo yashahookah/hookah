@@ -140,8 +140,8 @@ function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
   const sign = delta > 0 ? 1 : -1;
-  // один жест пальца = максимум один шаг примерно раз в 450мс
-  if (now - kioskLastChangeAt < 450 && sign === kioskLastDeltaSign) return;
+  // один жест пальца = максимум один шаг примерно раз в 360мс
+  if (now - kioskLastChangeAt < 360 && sign === kioskLastDeltaSign) return;
 
   kioskLastChangeAt = now;
   kioskLastDeltaSign = sign;
@@ -260,7 +260,7 @@ function kioskRenderSlides() {
         const endY = endTouch.clientY;
         const diffX = endX - touchStartX;
         const diffY = endY - touchStartY;
-        const thresholdX = 50; // горизонтальный свайп: умеренный порог
+        const thresholdX = 40; // горизонтальный свайп: чуть более живой отклик
 
         touchStartY = null;
         touchStartX = null;

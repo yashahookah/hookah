@@ -18,14 +18,14 @@ const KIOSK_RU_TAG_OVERRIDES = {
 // лежащие в /static/img/labels/
 const kioskLabelImages = {
   // Коды товаров (product.code) → файл с картинкой пачки Adalya
-  "ledy_killer": "/static/img/labels/ledy_killer.png",
-  "ledy_banan_milk": "/static/img/labels/ledy_banan_milk.png",
-  moloko: "/static/img/labels/moloko.png",
-  karamel: "/static/img/labels/karamel.png",
-  love66: "/static/img/labels/love66.png",
-  citrus_mix: "/static/img/labels/citrus_mix.png",
-  kaktus: "/static/img/labels/kaktus.png",
-  lemon_pie: "/static/img/labels/lemon_pie.png",
+  ledy_killer: "/static/img/labels/Lady%20Killer.png",
+  ledy_banan_milk: "/static/img/labels/Ice%20Raspberry.png",
+  moloko: "/static/img/labels/Milk.png",
+  karamel: "/static/img/labels/Caramel.png",
+  love66: "/static/img/labels/Champagne.png",
+  citrus_mix: "/static/img/labels/Orange.png",
+  kaktus: "/static/img/labels/Cactus.png",
+  lemon_pie: "/static/img/labels/Lemon%20Pie.png",
 };
 
 // Дополнительный декор / фон для ароматов — для Adalya делаем свои фоны

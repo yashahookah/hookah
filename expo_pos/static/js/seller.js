@@ -387,6 +387,74 @@ function translitRuToEnForSearch(text) {
   return out.replace(/\s+/g, " ").trim();
 }
 
+function sellerSemanticSearchHints(product) {
+  const text = normalizeTextForSearch(
+    [
+      canonicalDisplayNameEn(product),
+      product && product.name,
+      product && product.code,
+      product && product.description,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+  const hints = [];
+
+  if (
+    text.includes("mint") ||
+    text.includes("wintergreen") ||
+    text.includes("menthol") ||
+    text.includes("cane mint")
+  ) {
+    hints.push("мята мятный ментол холод свежесть mint menthol fresh");
+  }
+  if (
+    text.includes("tea") ||
+    text.includes("chai") ||
+    text.includes("kashmir")
+  ) {
+    hints.push("чай чайный пряный tea chai kashmir специи");
+  }
+  if (
+    text.includes("citrus") ||
+    text.includes("lemon") ||
+    text.includes("lime") ||
+    text.includes("orange") ||
+    text.includes("grapefruit")
+  ) {
+    hints.push("цитрус лимон лайм апельсин грейпфрут кислый citrus lemon lime orange grapefruit");
+  }
+  if (
+    text.includes("berry") ||
+    text.includes("blueberry") ||
+    text.includes("blackberry") ||
+    text.includes("strawberry") ||
+    text.includes("cherry")
+  ) {
+    hints.push("ягода ягодный черника ежевика клубника вишня berry blueberry blackberry strawberry cherry");
+  }
+  if (
+    text.includes("mango") ||
+    text.includes("papaya") ||
+    text.includes("guava") ||
+    text.includes("pineapple") ||
+    text.includes("peach") ||
+    text.includes("watermelon") ||
+    text.includes("melon")
+  ) {
+    hints.push("фрукт фруктовый тропик манго папайя гуаява ананас персик арбуз дыня tropical fruit");
+  }
+  if (
+    text.includes("cream") ||
+    text.includes("vanilla") ||
+    text.includes("dessert") ||
+    text.includes("horchata")
+  ) {
+    hints.push("десерт сливочный крем ваниль сладкий dessert cream vanilla");
+  }
+  return hints.join(" ");
+}
+
 function productMatchesQuery(product, q) {
   if (!q) return true;
   const normQ = normalizeTextForSearch(q).trim();
@@ -416,6 +484,8 @@ function productMatchesQuery(product, q) {
       .filter(Boolean)
       .join(" ")
   );
+  const semanticHints = sellerSemanticSearchHints(product);
+  if (semanticHints) haystack += " " + semanticHints;
 
   // если пользователь вводит по‑русски, добавляем грубый транслит латинских имён
   if (hasCyr) {

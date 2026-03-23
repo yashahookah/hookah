@@ -831,7 +831,7 @@ body.kiosk-body-lock {
     position: fixed;
     left: 50%;
     transform: translateX(-50%);
-    top: 26px;
+    top: 56px;
     width: min(90vw, 420px);
     max-height: 18vh;
     overflow-y: auto;
@@ -923,7 +923,7 @@ body.kiosk-body-lock {
 }
 @media (max-width: 640px) {
     .kiosk-description {
-        top: 20px;
+        top: 44px;
         width: min(92vw, 360px);
         max-height: 18vh;
         font-size: 13px;

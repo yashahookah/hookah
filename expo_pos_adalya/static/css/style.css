@@ -11,7 +11,7 @@ body {
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     background: #020617;
     color: #f9fafb;
 }
@@ -1254,7 +1254,7 @@ body.kiosk-body-lock {
     position: relative;
     width: 100%;
     max-width: 520px;
-    margin: 32px auto 0;
+    margin: 52px auto 0;
     height: min(65vh, 520px);
 }
 
@@ -1339,7 +1339,7 @@ body.kiosk-body-lock {
     .kiosk-pack-visual {
         max-width: 380px;
         height: min(60dvh, 380px);
-        margin-top: 16px;
+        margin-top: 28px;
     }
 }
 
@@ -1356,7 +1356,7 @@ body.kiosk-body-lock {
     .kiosk-pack-visual {
         max-width: 560px;
         height: min(70vh, 560px);
-        margin-top: 40px;
+        margin-top: 56px;
     }
 }
 

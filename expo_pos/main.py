@@ -407,17 +407,29 @@ def root():
 @app.get("/seller", response_class=HTMLResponse)
 def seller_page(request: Request):
     # та же страница, что и киоск, но можно позже добавить initial_view=\"seller\"
-    return templates.TemplateResponse("app.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="app.html",
+        context={"request": request},
+    )
 
 
 @app.get("/picking", response_class=HTMLResponse)
 def picking_page(request: Request):
-    return templates.TemplateResponse("picking.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="picking.html",
+        context={"request": request},
+    )
 
 
 @app.get("/kiosk", response_class=HTMLResponse)
 def kiosk_page(request: Request):
-    return templates.TemplateResponse("app.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="app.html",
+        context={"request": request},
+    )
 
 @app.get("/api/products", response_model=List[ProductOut])
 def list_products(db: Session = Depends(get_db)):

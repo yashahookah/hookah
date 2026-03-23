@@ -91,6 +91,101 @@ const kioskCategoriesByBg = {};
 // Все фоны: тёмные полосы + цветные градиенты → светлый текст читается везде
 const kioskLabelColorByBg = {};
 
+// Контент верхнего описания для витрины
+const KIOSK_DESCRIPTION_META = {
+  ledy_killer: {
+    en: "Lady Killer",
+    ru: "Персик, манго, мята и холодок",
+    marketing:
+      "Яркий тропический хит с мятной прохладой: мягкий персик и манго раскрываются свежо и чисто.",
+    tags: ["Сладкий", "Фруктовый", "Освежающий"],
+  },
+  ledy_banan_milk: {
+    en: "Ice Raspberry",
+    ru: "Малина и холодок",
+    marketing:
+      "Сочная ягода с ледяным финишем: узнаваемый малиновый профиль с быстрым освежающим эффектом.",
+    tags: ["Ягодный", "Кисло-сладкий", "Освежающий"],
+  },
+  moloko: {
+    en: "Milk",
+    ru: "Молоко",
+    marketing:
+      "Нежный кремовый вкус без лишней резкости: мягкий, округлый и комфортный для ежедневного курения.",
+    tags: ["Сладкий", "Кремовый", "Мягкий"],
+  },
+  karamel: {
+    en: "Caramel",
+    ru: "Карамель",
+    marketing:
+      "Теплый десертный акцент с карамельной глубиной: сладко, насыщенно и очень уютно в миксах.",
+    tags: ["Сладкий", "Десертный", "Насыщенный"],
+  },
+  love66: {
+    en: "Champagne",
+    ru: "Шампанское",
+    marketing:
+      "Игристый яркий аромат с праздничным настроением: легкая сладость и свежий виноградный характер.",
+    tags: ["Сладкий", "Фруктовый", "Легкий"],
+  },
+  citrus_mix: {
+    en: "Orange",
+    ru: "Апельсин",
+    marketing:
+      "Солнечный цитрус с чистой апельсиновой нотой: бодрый старт и сочный вкус до самого конца.",
+    tags: ["Цитрусовый", "Кислый", "Освежающий"],
+  },
+  kaktus: {
+    en: "Cactus",
+    ru: "Кактус",
+    marketing:
+      "Экзотический сочный профиль с прохладным послевкусием: нестандартно, ярко и свежо.",
+    tags: ["Фруктовый", "Тропический", "Освежающий"],
+  },
+  lemon_pie: {
+    en: "Lemon Pie",
+    ru: "Лимонный пирог",
+    marketing:
+      "Десертный лимон с мягкой сладкой базой: баланс кислинки и сливочной выпечки в одном вкусе.",
+    tags: ["Десертный", "Кисло-сладкий", "Сливочный"],
+  },
+  berrymix: {
+    en: "Berrymix",
+    ru: "Ягодный микс",
+    marketing:
+      "Многослойный ягодный букет с сочной сладко-кислой атакой: ярко ощущается в соло и в миксах.",
+    tags: ["Ягодный", "Кисло-сладкий", "Насыщенный"],
+  },
+  mango_tango: {
+    en: "Mango Tango",
+    ru: "Манго маракуйя",
+    marketing:
+      "Тропический дуэт манго и маракуйи: плотный фруктовый вкус с эффектным ароматным шлейфом.",
+    tags: ["Тропический", "Сладкий", "Фруктовый"],
+  },
+  strawberry: {
+    en: "Strawberry",
+    ru: "Клубника",
+    marketing:
+      "Классическая сладкая клубника с мягким ягодным телом: понятный вкус, который нравится всем.",
+    tags: ["Ягодный", "Сладкий", "Легкий"],
+  },
+  mint: {
+    en: "Mint",
+    ru: "Мята",
+    marketing:
+      "Чистая мятная свежесть для соло и миксов: быстро охлаждает и добавляет объема любому сочетанию.",
+    tags: ["Мятный", "Освежающий", "Холодный"],
+  },
+  ice: {
+    en: "Ice",
+    ru: "Лед",
+    marketing:
+      "Максимально холодный профиль без лишней сладости: идеален для усиления свежести в любых миксах.",
+    tags: ["Холодный", "Освежающий", "Нейтральный"],
+  },
+};
+
 function kioskPlayAddToCartAnimation() {
   const slidesContainer = document.getElementById("kiosk-slides");
   if (!slidesContainer) return;
@@ -403,9 +498,35 @@ function kioskEscape(s) {
 function kioskUpdateDescription() {
   const el = document.getElementById("kiosk-description");
   if (!el) return;
-  // В Adalya не показываем названия и описания — только пачки
-  el.innerHTML = "";
-  el.style.display = "none";
+  const products = kioskState.products;
+  if (!products.length) {
+    el.innerHTML = "";
+    el.style.display = "none";
+    return;
+  }
+  const total = products.length;
+  let idx = kioskState.activeIndex;
+  idx = ((idx % total) + total) % total;
+  const active = products[idx];
+  const code = active && active.code ? String(active.code).toLowerCase() : "";
+  const meta = KIOSK_DESCRIPTION_META[code];
+  if (!meta) {
+    el.innerHTML = "";
+    el.style.display = "none";
+    return;
+  }
+
+  const tagsHtml = (meta.tags || [])
+    .map((tag) => `<span class="kiosk-desc-tag">${kioskEscape(tag)}</span>`)
+    .join("");
+
+  el.innerHTML = `
+    <span class="kiosk-desc-name">${kioskEscape(meta.en)}</span>
+    <div>${kioskEscape(meta.ru)}</div>
+    <div style="margin-top:6px;">${kioskEscape(meta.marketing)}</div>
+    <div class="kiosk-desc-tags">${tagsHtml}</div>
+  `;
+  el.style.display = "";
 }
 
 function kioskUpdateAromaHalo() {

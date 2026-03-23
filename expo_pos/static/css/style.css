@@ -831,7 +831,7 @@ body.kiosk-body-lock {
     position: fixed;
     left: 50%;
     transform: translateX(-50%);
-    top: 26px;
+    top: 10px;
     width: min(90vw, 420px);
     max-height: 18vh;
     overflow-y: auto;
@@ -854,9 +854,9 @@ body.kiosk-body-lock {
 }
 .kiosk-description .kiosk-desc-name {
     display: block;
-    font-family: "Caveat", "Patrick Hand", cursive;
-    font-size: 22px;
-    font-weight: 700;
+    font-family: "Outfit", system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
     margin-bottom: 4px;
     line-height: 1.25;
 }
@@ -923,7 +923,7 @@ body.kiosk-body-lock {
 }
 @media (max-width: 640px) {
     .kiosk-description {
-        top: 20px;
+        top: 8px;
         width: min(92vw, 360px);
         max-height: 18vh;
         font-size: 13px;
@@ -1213,7 +1213,8 @@ body.kiosk-body-lock {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: space-between;
+    justify-content: flex-start;
+    position: relative;
     background: transparent;
     color: inherit;
 }
@@ -1227,6 +1228,8 @@ body.kiosk-body-lock {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    flex: 1;
     gap: 16px;
     height: 100%;
 }

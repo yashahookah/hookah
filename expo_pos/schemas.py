@@ -12,6 +12,8 @@ class ProductOut(BaseModel):
     code: str
     price: float
     quantity: int
+    display_name_en: Optional[str] = None
+    search_ru: Optional[str] = None
     description: Optional[str] = None
 
     class Config:

@@ -157,7 +157,11 @@ function buildRuName(product) {
 function normalizeTextForSearch(text) {
   return String(text || "")
     .toLowerCase()
-    .replace(/ё/g, "е");
+    .replace(/ё/g, "е")
+    .replace(/[’']/g, "")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function resolveAliasTarget(normQ) {
@@ -329,6 +333,54 @@ function translitEnToRuForSearch(text) {
   return out.replace(/\s+/g, " ").trim();
 }
 
+// Обратный грубый транслит RU -> EN, чтобы русский запрос мог
+// находить латинские названия даже без явных русских слов в описании.
+function translitRuToEnForSearch(text) {
+  if (!text) return "";
+  const map = {
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "g",
+    д: "d",
+    е: "e",
+    ё: "e",
+    ж: "zh",
+    з: "z",
+    и: "i",
+    й: "y",
+    к: "k",
+    л: "l",
+    м: "m",
+    н: "n",
+    о: "o",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    у: "u",
+    ф: "f",
+    х: "h",
+    ц: "ts",
+    ч: "ch",
+    ш: "sh",
+    щ: "sch",
+    ъ: "",
+    ы: "y",
+    ь: "",
+    э: "e",
+    ю: "yu",
+    я: "ya",
+  };
+  let out = "";
+  const src = String(text).toLowerCase();
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    out += map[ch] !== undefined ? map[ch] : ch;
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
 function productMatchesQuery(product, q) {
   if (!q) return true;
   const normQ = normalizeTextForSearch(q).trim();
@@ -338,15 +390,23 @@ function productMatchesQuery(product, q) {
   const aliasTarget = resolveAliasTarget(normQ);
   if (aliasTarget) {
     // матчим, если имя содержит базовое название (чтобы ловить Cool Strawberry N, Pink и т.п.)
-    return (product.name || "")
-      .toLowerCase()
-      .includes(String(aliasTarget).toLowerCase());
+    const aliasNeedle = String(aliasTarget).toLowerCase();
+    return [product.name, product.display_name_en, product.code]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(aliasNeedle));
   }
 
   const hasCyr = /[а-я]/.test(normQ);
+  const hasLat = /[a-z]/.test(normQ);
 
   let haystack = normalizeTextForSearch(
-    [product.name, product.code, product.description, buildRuName(product)]
+    [
+      product.name,
+      product.display_name_en,
+      product.code,
+      product.description,
+      buildRuName(product),
+    ]
       .filter(Boolean)
       .join(" ")
   );
@@ -358,6 +418,21 @@ function productMatchesQuery(product, q) {
     );
     if (phon) {
       haystack += " " + phon;
+    }
+    const qToEn = translitRuToEnForSearch(normQ);
+    if (qToEn) {
+      haystack += " " + normalizeTextForSearch(qToEn);
+    }
+  }
+
+  // если пользователь вводит латиницей, добавляем грубый транслит
+  // русских полей, чтобы "yagod" находило "ягодный" в описаниях.
+  if (hasLat) {
+    const ruToEn = translitRuToEnForSearch(
+      `${product.description || ""} ${buildRuName(product) || ""}`
+    );
+    if (ruToEn) {
+      haystack += " " + normalizeTextForSearch(ruToEn);
     }
   }
 
@@ -371,7 +446,25 @@ function productMatchesQuery(product, q) {
       // берём первые 4 буквы как общий корень
       needle = token.slice(0, 4);
     }
-    return haystack.includes(needle);
+    if (haystack.includes(needle)) return true;
+    // Допуск в 1 символ для средних/длинных слов,
+    // чтобы переживать опечатки: "клубнка" -> "клубника".
+    if (needle.length < 5) return false;
+    const words = haystack.split(" ");
+    for (const w of words) {
+      if (Math.abs(w.length - needle.length) > 1) continue;
+      let miss = 0;
+      const max = Math.min(w.length, needle.length);
+      for (let i = 0; i < max; i++) {
+        if (w[i] !== needle[i]) {
+          miss += 1;
+          if (miss > 1) break;
+        }
+      }
+      miss += Math.abs(w.length - needle.length);
+      if (miss <= 1) return true;
+    }
+    return false;
   });
 }
 

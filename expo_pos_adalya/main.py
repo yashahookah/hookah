@@ -64,6 +64,11 @@ app.mount(
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
+def render_template_html(name: str, request: Request, **context) -> HTMLResponse:
+    template = templates.env.get_template(name)
+    html = template.render({"request": request, **context})
+    return HTMLResponse(content=html)
+
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -151,26 +156,17 @@ def root():
 @app.get("/seller", response_class=HTMLResponse)
 def seller_page(request: Request):
     # та же страница, что и киоск, но можно позже добавить initial_view=\"seller\"
-    return templates.TemplateResponse(
-        name="app.html",
-        context={"request": request},
-    )
+    return render_template_html("app.html", request)
 
 
 @app.get("/picking", response_class=HTMLResponse)
 def picking_page(request: Request):
-    return templates.TemplateResponse(
-        name="picking.html",
-        context={"request": request},
-    )
+    return render_template_html("picking.html", request)
 
 
 @app.get("/kiosk", response_class=HTMLResponse)
 def kiosk_page(request: Request):
-    return templates.TemplateResponse(
-        name="app.html",
-        context={"request": request},
-    )
+    return render_template_html("app.html", request)
 
 @app.get("/api/products", response_model=List[ProductOut])
 def list_products(db: Session = Depends(get_db)):

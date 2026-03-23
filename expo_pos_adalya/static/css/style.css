@@ -833,8 +833,8 @@ body.kiosk-body-lock {
     transform: translateX(-50%);
     top: 26px;
     width: min(90vw, 420px);
-    max-height: 18vh;
-    overflow-y: auto;
+    max-height: none;
+    overflow: hidden;
     font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: 14px;
     font-weight: 500;
@@ -842,7 +842,6 @@ body.kiosk-body-lock {
     text-align: center;
     padding: 0 20px;
     z-index: 2;
-    -webkit-overflow-scrolling: touch;
     transform-origin: center center;
     backface-visibility: hidden;
     transition:
@@ -925,7 +924,7 @@ body.kiosk-body-lock {
     .kiosk-description {
         top: 20px;
         width: min(92vw, 360px);
-        max-height: 18vh;
+        max-height: none;
         font-size: 13px;
         padding: 0 16px;
     }

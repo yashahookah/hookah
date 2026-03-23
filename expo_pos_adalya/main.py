@@ -21,6 +21,22 @@ BASE_DIR = Path(__file__).resolve().parent
 _FLAVOR_DESCRIPTIONS: dict[str, str] = {}
 _FLAVOR_BY_BASE: dict[str, str] = {}  # base name -> full key
 
+ADALYA_FLAVOR_DESCRIPTIONS: dict[str, str] = {
+    "berrymix": "Ягодный микс. Яркий букет спелых ягод с сочным сладко-кислым профилем.",
+    "kaktus": "Кактус. Экзотический свежий вкус с мягкой травянистой ноткой.",
+    "karamel": "Карамель. Теплый десертный аромат с насыщенной сладостью.",
+    "love66": "Шампанское. Легкий игристый профиль с праздничным настроением.",
+    "ledy_killer": "Персик, манго, мята и холодок. Тропический микс с ментоловой свежестью.",
+    "ledy_banan_milk": "Малина и холодок. Сочная ягода с чистым ледяным финишем.",
+    "lemon_pie": "Лимонный пирог. Десертный лимон с мягкой сливочной подложкой.",
+    "moloko": "Молоко. Нежный кремовый вкус для мягких сладких миксов.",
+    "citrus_mix": "Апельсин. Сочный цитрус с бодрой кисло-сладкой подачей.",
+    "strawberry": "Клубника. Классический сладкий ягодный вкус на каждый день.",
+    "ice": "Лед. Чистый холод для усиления свежести в любых сочетаниях.",
+    "mango_tango": "Манго маракуйя. Тропический дуэт с насыщенным фруктовым телом.",
+    "mint": "Мята. Освежающий мятный профиль с чистым прохладным послевкусием.",
+}
+
 
 def _load_flavor_descriptions():
     global _FLAVOR_DESCRIPTIONS, _FLAVOR_BY_BASE
@@ -90,24 +106,19 @@ def init_db():
 
         # Только ароматы Adalya, которые ты прислал
         sample_products = [
-            {"name": "Леди Киллер", "code": "ledy_killer", "price": 3000.0, "quantity": 50},
-            {
-                "name": "Ледяной Банан с молоком",
-                "code": "ledy_banan_milk",
-                "price": 3000.0,
-                "quantity": 50,
-            },
-            {"name": "Молоко", "code": "moloko", "price": 3000.0, "quantity": 50},
-            {"name": "Карамель", "code": "karamel", "price": 3000.0, "quantity": 50},
-            {"name": "Лав 66", "code": "love66", "price": 3000.0, "quantity": 50},
-            {"name": "Цитрусовый микс", "code": "citrus_mix", "price": 3000.0, "quantity": 50},
-            {"name": "Кактус", "code": "kaktus", "price": 3000.0, "quantity": 50},
-            {"name": "Лимонный пирог", "code": "lemon_pie", "price": 3000.0, "quantity": 50},
-            {"name": "Ягодный микс", "code": "berrymix", "price": 3000.0, "quantity": 50},
-            {"name": "Манго Танго", "code": "mango_tango", "price": 3000.0, "quantity": 50},
-            {"name": "Клубника", "code": "strawberry", "price": 3000.0, "quantity": 50},
-            {"name": "Мята", "code": "mint", "price": 3000.0, "quantity": 50},
-            {"name": "Лёд", "code": "ice", "price": 3000.0, "quantity": 50},
+            {"name": "Berrymix", "code": "berrymix", "price": 750.0, "quantity": 50},
+            {"name": "Cactus", "code": "kaktus", "price": 750.0, "quantity": 50},
+            {"name": "Caramel", "code": "karamel", "price": 750.0, "quantity": 50},
+            {"name": "Champagne", "code": "love66", "price": 750.0, "quantity": 50},
+            {"name": "Lady Killer", "code": "ledy_killer", "price": 750.0, "quantity": 50},
+            {"name": "Ice Raspberry", "code": "ledy_banan_milk", "price": 750.0, "quantity": 50},
+            {"name": "Lemon Pie", "code": "lemon_pie", "price": 750.0, "quantity": 50},
+            {"name": "Milk", "code": "moloko", "price": 750.0, "quantity": 50},
+            {"name": "Orange", "code": "citrus_mix", "price": 750.0, "quantity": 50},
+            {"name": "Strawberry", "code": "strawberry", "price": 750.0, "quantity": 50},
+            {"name": "Ice", "code": "ice", "price": 750.0, "quantity": 50},
+            {"name": "Mango Tango", "code": "mango_tango", "price": 750.0, "quantity": 50},
+            {"name": "Mint", "code": "mint", "price": 750.0, "quantity": 50},
         ]
 
         for idx, p in enumerate(sample_products):
@@ -179,8 +190,7 @@ def list_products(db: Session = Depends(get_db)):
     )
     result: List[ProductOut] = []
     for product, stock in products:
-        # В Adalya не показываем текстовые описания — только пачки
-        desc = None
+        desc = ADALYA_FLAVOR_DESCRIPTIONS.get(product.code)
         result.append(
             ProductOut(
                 id=product.id,

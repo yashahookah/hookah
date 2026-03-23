@@ -1242,10 +1242,17 @@ body.kiosk-body-lock {
     pointer-events: none;
     display: none;
     position: absolute;
-    top: -52px;
+    top: 36px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;
+}
+
+@media (max-width: 640px) {
+    .kiosk-slide-caption {
+        top: 26px;
+        width: min(92vw, 360px);
+    }
 }
 
 .kiosk-slide-caption__name {

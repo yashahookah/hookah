@@ -632,7 +632,7 @@ function kioskRenderSlides() {
       <div class="kiosk-slide-inner">
         <div class="kiosk-slide-caption" style="color:${textColor}">
           <div class="kiosk-slide-caption__name">${kioskEscape(
-            p.display_name_en || p.name || ""
+            kioskCanonicalDisplayNameEn(p)
           )}</div>
           ${desc ? `<div class="kiosk-slide-caption__desc">${kioskEscape(desc)}</div>` : ""}
           ${catsHtml ? `<div class="kiosk-desc-tags kiosk-slide-caption__tags">${catsHtml}</div>` : ""}
@@ -841,6 +841,26 @@ function kioskEscape(s) {
   return div.innerHTML;
 }
 
+function kioskCanonicalDisplayNameEn(product) {
+  const code = String((product && product.code) || "")
+    .trim()
+    .toLowerCase();
+  const name = String((product && product.name) || "")
+    .trim()
+    .toLowerCase();
+  const disp = String((product && product.display_name_en) || "").trim();
+  if (code === "cilantro" || code === "cilantro-pineapple" || name === "cilantro") {
+    return "Cilantro pineapple";
+  }
+  if (code === "muerte" || code === "muerte-por-arroz" || name === "muerte") {
+    return "Muerte por Arroz";
+  }
+  if (code === "mixed" || code === "mixed-fruit" || name === "mixed") {
+    return "Mixed Fruit";
+  }
+  return disp || (product && product.name) || "";
+}
+
 function kioskUpdateDescription() {
   // Мы показываем описание/расшифровку только в caption под "лицевой" пачкой.
   // Фиксированный блок #kiosk-description отключаем, чтобы не было дублей и “хвостов” от предыдущих ароматов.
@@ -892,7 +912,7 @@ function kioskUpdateAromaHalo() {
     const horizontalShift = isMobile ? 64 : 76;
     el.style.transform = `translate(${x + horizontalShift}px, ${y}px)`;
     const labelSrc = p.code ? kioskLabelImages[p.code] : undefined;
-    const safeName = p.display_name_en || p.name || p.code || "";
+    const safeName = kioskCanonicalDisplayNameEn(p) || p.code || "";
     const labelHtml = labelSrc
       ? `
           <img
@@ -1144,7 +1164,8 @@ document.addEventListener("DOMContentLoaded", () => {
         toast.className = "kiosk-fab-toast";
         document.body.appendChild(toast);
       }
-      const label = active.display_name_en || active.name || active.code || "пачка";
+      const label =
+        kioskCanonicalDisplayNameEn(active) || active.code || "пачка";
       const meta = kioskGetMetaForProduct(active);
       let nameColor = "#facc15";
       if (meta && meta.bgClass && kioskLabelColorByBg[meta.bgClass]) {

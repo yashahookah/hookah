@@ -1022,6 +1022,16 @@ def list_products(db: Session = Depends(get_db)):
         desc = get_flavor_description(product.name)
         tng_info = _get_tng_info_for_stem(product.name)
         display_name_en = tng_info.get("display_name_en") or product.name
+        # Явные исправления отображаемых английских названий.
+        # Нужны как "последний слой" даже если CSV/БД содержат старый вариант.
+        code_key = (product.code or "").strip().lower()
+        name_key = (product.name or "").strip().lower()
+        if code_key in {"cilantro", "cilantro-pineapple"} or name_key == "cilantro":
+            display_name_en = "Cilantro pineapple"
+        elif code_key in {"muerte", "muerte-por-arroz"} or name_key == "muerte":
+            display_name_en = "Muerte por Arroz"
+        elif code_key in {"mixed", "mixed-fruit"} or name_key == "mixed":
+            display_name_en = "Mixed Fruit"
         csv_desc = tng_info.get("description") or ""
         # Если в CSV есть описание — используем его (это и есть "фулл список").
         final_desc = csv_desc.strip() or desc

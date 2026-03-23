@@ -45,6 +45,22 @@ const SEARCH_ALIASES = {
   "ерик манго": "Eric's Mango",
   эрик: "Eric's Mango",
   ерик: "Eric's Mango",
+
+  cilantro: "Cilantro pineapple",
+  кинза: "Cilantro pineapple",
+  "с кинзой": "Cilantro pineapple",
+
+  muerte: "Muerte por Arroz",
+  мурте: "Muerte por Arroz",
+  "муэрте": "Muerte por Arroz",
+  arroz: "Muerte por Arroz",
+  арроз: "Muerte por Arroz",
+  рис: "Muerte por Arroz",
+
+  mixed: "Mixed Fruit",
+  микс: "Mixed Fruit",
+  "mixed fruit": "Mixed Fruit",
+  "микс фрукт": "Mixed Fruit",
 };
 
 function sellerNormalizeFilenameKey(s) {
@@ -150,10 +166,30 @@ function buildRuName(product) {
   return sentence;
 }
 
+function canonicalDisplayNameEn(product) {
+  const code = normalizeTextForSearch(product && product.code);
+  const name = normalizeTextForSearch(product && product.name);
+  const disp = String((product && product.display_name_en) || "").trim();
+  if (code === "cilantro" || code === "cilantro pineapple" || name === "cilantro") {
+    return "Cilantro pineapple";
+  }
+  if (code === "muerte" || code === "muerte por arroz" || name === "muerte") {
+    return "Muerte por Arroz";
+  }
+  if (code === "mixed" || code === "mixed fruit" || name === "mixed") {
+    return "Mixed Fruit";
+  }
+  return disp || (product && product.name) || "";
+}
+
 function normalizeTextForSearch(text) {
   return String(text || "")
     .toLowerCase()
-    .replace(/ё/g, "е");
+    .replace(/ё/g, "е")
+    .replace(/[’']/g, "")
+    .replace(/[^a-zа-я0-9]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function resolveAliasTarget(normQ) {
@@ -325,6 +361,20 @@ function translitEnToRuForSearch(text) {
   return out.replace(/\s+/g, " ").trim();
 }
 
+function translitRuToEnForSearch(text) {
+  if (!text) return "";
+  const map = {
+    а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z",
+    и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
+    с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sch",
+    ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
+  };
+  let out = "";
+  const src = String(text).toLowerCase();
+  for (let i = 0; i < src.length; i++) out += map[src[i]] ?? src[i];
+  return out.replace(/\s+/g, " ").trim();
+}
+
 function productMatchesQuery(product, q) {
   if (!q) return true;
   const normQ = normalizeTextForSearch(q).trim();
@@ -333,16 +383,24 @@ function productMatchesQuery(product, q) {
   // если запрос совпадает с алиасом (точно или по вхождению) — матчим по имени
   const aliasTarget = resolveAliasTarget(normQ);
   if (aliasTarget) {
-    // матчим, если имя содержит базовое название (чтобы ловить Cool Strawberry N, Pink и т.п.)
-    return (product.name || "")
-      .toLowerCase()
-      .includes(String(aliasTarget).toLowerCase());
+    const aliasNeedle = normalizeTextForSearch(String(aliasTarget));
+    return [canonicalDisplayNameEn(product), product.name, product.code]
+      .filter(Boolean)
+      .some((v) => normalizeTextForSearch(String(v)).includes(aliasNeedle));
   }
 
   const hasCyr = /[а-я]/.test(normQ);
+  const hasLat = /[a-z]/.test(normQ);
 
   let haystack = normalizeTextForSearch(
-    [product.name, product.code, product.description, buildRuName(product)]
+    [
+      product.display_name_en,
+      canonicalDisplayNameEn(product),
+      product.name,
+      product.code,
+      product.description,
+      buildRuName(product),
+    ]
       .filter(Boolean)
       .join(" ")
   );
@@ -355,8 +413,18 @@ function productMatchesQuery(product, q) {
     if (phon) {
       haystack += " " + phon;
     }
+    const qEn = translitRuToEnForSearch(normQ);
+    if (qEn) haystack += " " + normalizeTextForSearch(qEn);
   }
 
+  if (hasLat) {
+    const ruEn = translitRuToEnForSearch(
+      `${product.description || ""} ${buildRuName(product) || ""}`
+    );
+    if (ruEn) haystack += " " + normalizeTextForSearch(ruEn);
+  }
+
+  const flatHaystack = haystack.replace(/\s+/g, "");
   const tokens = normQ.split(/\s+/).filter(Boolean);
   return tokens.every((token) => {
     // для русских слов делаем поиск по началу слова (общий корень),
@@ -367,7 +435,26 @@ function productMatchesQuery(product, q) {
       // берём первые 4 буквы как общий корень
       needle = token.slice(0, 4);
     }
-    return haystack.includes(needle);
+    if (haystack.includes(needle)) return true;
+    if (flatHaystack.includes(needle.replace(/\s+/g, ""))) return true;
+
+    // Допуск к опечатке в 1 символ для "длинных" слов.
+    if (needle.length < 5) return false;
+    const words = haystack.split(" ").filter(Boolean);
+    for (const w of words) {
+      if (Math.abs(w.length - needle.length) > 1) continue;
+      let miss = 0;
+      const max = Math.min(w.length, needle.length);
+      for (let i = 0; i < max; i++) {
+        if (w[i] !== needle[i]) {
+          miss += 1;
+          if (miss > 1) break;
+        }
+      }
+      miss += Math.abs(w.length - needle.length);
+      if (miss <= 1) return true;
+    }
+    return false;
   });
 }
 
@@ -392,7 +479,8 @@ async function fetchProducts() {
           const key = p && p.name ? String(p.name).trim().toLowerCase() : "";
           const ov = key && items[key] ? items[key] : null;
           if (ov) {
-            p.display_name_en = ov.display_name_en || p.display_name_en || p.name;
+            p.display_name_en =
+              ov.display_name_en || p.display_name_en || p.name;
             p.description = ov.description || p.description;
           }
         });
@@ -480,7 +568,7 @@ function renderProducts() {
       card.innerHTML = `
         <div class="product-card__name">
             <span class="product-card__name-en">${escapeHtml(
-              p.display_name_en || p.name
+              canonicalDisplayNameEn(p)
             )}</span>
           ${
             ruName
@@ -665,7 +753,7 @@ function renderCart() {
     li.className = "cart-item";
     li.innerHTML = `
       <div>
-        <div class="cart-item__name">${product.display_name_en || product.name}</div>
+        <div class="cart-item__name">${canonicalDisplayNameEn(product)}</div>
         <div class="cart-item__meta">${qty} × ${product.price.toFixed(
           0
         )} ₽</div>

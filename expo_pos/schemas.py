@@ -12,6 +12,7 @@ class ProductOut(BaseModel):
     code: str
     price: float
     quantity: int
+    in_stock: bool = True
     # display_name_en — отображаемое имя (английское) из CSV.
     # name остаётся "ключом" под имя файла упаковки.
     display_name_en: Optional[str] = None

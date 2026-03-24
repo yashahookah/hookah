@@ -590,8 +590,12 @@ async function kioskFetchProducts() {
       console.warn("TNG overrides apply failed", e);
     }
 
-    // сортируем пачки по имени, чтобы иерархия была логичной
-    kioskState.products = data.sort((a, b) =>
+    // В витрине показываем только то, что есть в наличии.
+    const inStockOnly = data.filter((p) => {
+      if (typeof p.in_stock === "boolean") return p.in_stock;
+      return Number(p.quantity || 0) > 0;
+    });
+    kioskState.products = inStockOnly.sort((a, b) =>
       (a.name || "").localeCompare(b.name || "", "ru")
     );
     kioskState.activeIndex = 0;

@@ -18,7 +18,7 @@ const KIOSK_RU_TAG_OVERRIDES = {
 // лежащие в /static/img/labels/
 const kioskLabelImages = {
   // Коды товаров (product.code) → файл с картинкой пачки Adalya
-  ledy_killer: "/static/img/labels/Lady%20Killer.png",
+  ledy_killer: "/static/img/labels/Pineapple.png",
   ledy_banan_milk: "/static/img/labels/Ice%20Raspberry.png",
   moloko: "/static/img/labels/Milk.png",
   karamel: "/static/img/labels/Caramel.png",
@@ -94,11 +94,11 @@ const kioskLabelColorByBg = {};
 // Контент верхнего описания для витрины
 const KIOSK_DESCRIPTION_META = {
   ledy_killer: {
-    en: "Lady Killer",
-    ru: "Персик, манго, мята и холодок",
+    en: "Pineapple",
+    ru: "Ананас",
     marketing:
-      "Яркий тропический хит с мятной прохладой: мягкий персик и манго раскрываются свежо и чисто.",
-    tags: ["Сладкий", "Фруктовый", "Освежающий"],
+      "Сочный тропический ананас с яркой сладкой подачей: чистый фруктовый профиль для соло и миксов.",
+    tags: ["Тропический", "Сладкий", "Фруктовый"],
   },
   ledy_banan_milk: {
     en: "Ice Raspberry",

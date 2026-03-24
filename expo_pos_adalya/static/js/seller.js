@@ -18,7 +18,7 @@ const RU_NAME_OVERRIDES = {
 
 // Коды товаров (product.code) → файл с картинкой пачки Adalya
 const ADALYA_PACK_IMAGES = {
-  ledy_killer: "/static/img/labels/Lady%20Killer.png",
+  ledy_killer: "/static/img/labels/Pineapple.png",
   ledy_banan_milk: "/static/img/labels/Ice%20Raspberry.png",
   moloko: "/static/img/labels/Milk.png",
   karamel: "/static/img/labels/Caramel.png",

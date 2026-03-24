@@ -1276,7 +1276,7 @@ body.kiosk-body-lock {
     pointer-events: none;
     display: none;
     position: absolute;
-    top: -32px;
+    top: -64px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 5;
@@ -1284,7 +1284,7 @@ body.kiosk-body-lock {
 
 @media (max-width: 640px) {
     .kiosk-slide-caption {
-        top: -20px;
+        top: -40px;
         width: min(92vw, 360px);
     }
 }

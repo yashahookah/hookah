@@ -519,6 +519,18 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
+let kioskBooted = false;
+
+function kioskIsVisible() {
+  const view = document.getElementById("view-kiosk");
+  return !!(view && !view.classList.contains("app-view--hidden"));
+}
+
+function kioskEnsureBoot() {
+  if (kioskBooted) return;
+  kioskBooted = true;
+  kioskFetchProducts();
+}
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -1153,7 +1165,7 @@ async function kioskSubmitOrder() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  kioskFetchProducts();
+  if (kioskIsVisible()) kioskEnsureBoot();
 
   const addActiveBtn = document.getElementById("kiosk-add-active");
   if (addActiveBtn) {
@@ -1221,6 +1233,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("kiosk-submit-order")
     .addEventListener("click", kioskSubmitOrder);
+
+  window.addEventListener("pos:view-change", (e) => {
+    const viewName = e && e.detail ? String(e.detail) : "";
+    if (viewName === "kiosk") {
+      kioskEnsureBoot();
+      kioskRenderSummary();
+    }
+  });
 });
 
 

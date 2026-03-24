@@ -29,6 +29,9 @@
       if (typeof renderProducts === "function") renderProducts();
       if (typeof renderCart === "function") renderCart();
     }
+    try {
+      window.dispatchEvent(new CustomEvent("pos:view-change", { detail: name }));
+    } catch (_) {}
   }
 
   // Стартовый вид: если URL /seller — открываем простое меню, иначе киоск

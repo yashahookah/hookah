@@ -7,6 +7,18 @@ const state = {
 
 let productsClickBound = false;
 let orderToastTimer = null;
+let sellerBooted = false;
+
+function sellerIsVisible() {
+  const view = document.getElementById("view-seller");
+  return !!(view && !view.classList.contains("app-view--hidden"));
+}
+
+function sellerEnsureBoot() {
+  if (sellerBooted) return;
+  sellerBooted = true;
+  fetchProducts();
+}
 
 const RU_NAME_OVERRIDES = {
   "2005 Blueberry": "Черничный кекс",
@@ -929,7 +941,7 @@ async function submitOrder() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  fetchProducts();
+  if (sellerIsVisible()) sellerEnsureBoot();
 
   const searchInput = document.getElementById("seller-search");
   if (searchInput) {
@@ -990,5 +1002,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  window.addEventListener("pos:view-change", (e) => {
+    const viewName = e && e.detail ? String(e.detail) : "";
+    if (viewName === "seller") {
+      sellerEnsureBoot();
+      renderProducts();
+      renderCart();
+    }
+  });
 });
 

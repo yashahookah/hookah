@@ -149,6 +149,20 @@ body.view-seller-active .seller__products {
     margin-bottom: 10px;
 }
 
+.seller-stock-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #cbd5e1;
+    user-select: none;
+}
+
+.seller-stock-toggle input {
+    accent-color: #facc15;
+}
+
 .seller-search__input {
     width: 100%;
     padding: 6px 10px;

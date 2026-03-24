@@ -26,7 +26,7 @@ ADALYA_FLAVOR_DESCRIPTIONS: dict[str, str] = {
     "kaktus": "Кактус. Экзотический свежий вкус с мягкой травянистой ноткой.",
     "karamel": "Карамель. Теплый десертный аромат с насыщенной сладостью.",
     "love66": "Шампанское. Легкий игристый профиль с праздничным настроением.",
-    "ledy_killer": "Персик, манго, мята и холодок. Тропический микс с ментоловой свежестью.",
+    "ledy_killer": "Ананас. Яркий тропический вкус со сладкой сочной подачей.",
     "ledy_banan_milk": "Малина и холодок. Сочная ягода с чистым ледяным финишем.",
     "lemon_pie": "Лимонный пирог. Десертный лимон с мягкой сливочной подложкой.",
     "moloko": "Молоко. Нежный кремовый вкус для мягких сладких миксов.",
@@ -110,7 +110,7 @@ def init_db():
             {"name": "Cactus", "code": "kaktus", "price": 750.0, "quantity": 50},
             {"name": "Caramel", "code": "karamel", "price": 750.0, "quantity": 50},
             {"name": "Champagne", "code": "love66", "price": 750.0, "quantity": 50},
-            {"name": "Lady Killer", "code": "ledy_killer", "price": 750.0, "quantity": 50},
+            {"name": "Pineapple", "code": "ledy_killer", "price": 750.0, "quantity": 50},
             {"name": "Ice Raspberry", "code": "ledy_banan_milk", "price": 750.0, "quantity": 50},
             {"name": "Lemon Pie", "code": "lemon_pie", "price": 750.0, "quantity": 50},
             {"name": "Milk", "code": "moloko", "price": 750.0, "quantity": 50},
@@ -307,7 +307,24 @@ def update_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    order.status = payload.status.value
+    prev_status = order.status
+    next_status = payload.status.value
+    if prev_status == next_status:
+        return _order_to_out(order)
+
+    # При отмене возвращаем остатки только один раз.
+    if next_status == OrderStatus.CANCELED.value and prev_status != OrderStatus.CANCELED.value:
+        if prev_status == OrderStatus.PAID.value:
+            raise HTTPException(status_code=400, detail="Paid order cannot be canceled")
+        for item in order.items:
+            stock = (
+                db.query(Stock).filter(Stock.product_id == item.product_id).first()
+            )
+            if stock:
+                stock.quantity += int(item.quantity or 0)
+                db.add(stock)
+
+    order.status = next_status
     order.updated_at = datetime.utcnow()
     db.add(order)
     db.commit()

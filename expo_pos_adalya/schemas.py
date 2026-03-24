@@ -12,6 +12,7 @@ class ProductOut(BaseModel):
     code: str
     price: float
     quantity: int
+    in_stock: bool = True
     description: Optional[str] = None
 
     class Config:

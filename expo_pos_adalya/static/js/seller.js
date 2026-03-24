@@ -421,6 +421,8 @@ function renderProducts() {
 
     groups[letter].forEach((p) => {
       const qty = state.cart[p.id] || 0;
+      const isInStock =
+        typeof p.in_stock === "boolean" ? p.in_stock : Number(p.quantity || 0) > 0;
       const fullDesc = (p.description || "").trim();
       const ruName = buildRuName(p);
 
@@ -452,6 +454,7 @@ function renderProducts() {
       const accentColor = getAccentColorForProduct(p);
       card.style.setProperty("--accent-color", accentColor);
       card.classList.add("product-card--accent");
+      if (!isInStock) card.classList.add("product-card--out");
       card.innerHTML = `
         <div class="product-card__name">
           <span class="product-card__name-en">${escapeHtml(p.name)}</span>
@@ -463,11 +466,17 @@ function renderProducts() {
         </div>
         ${desc ? `<div class="product-card__desc">${escapeHtml(desc)}</div>` : ""}
         <div class="product-card__price">${p.price.toFixed(0)} ₽</div>
-        <div class="product-card__stock">Остаток: ${p.quantity}</div>
+        <div class="product-card__stock">${
+          isInStock ? `Остаток: ${p.quantity}` : "Нет в наличии"
+        }</div>
         <div class="product-card__controls">
-          <button class="qty-btn" data-role="dec" data-id="${p.id}">-</button>
+          <button class="qty-btn" data-role="dec" data-id="${p.id}" ${
+            isInStock ? "" : "disabled"
+          }>-</button>
           <span class="qty-value">${qty}</span>
-          <button class="qty-btn" data-role="inc" data-id="${p.id}">+</button>
+          <button class="qty-btn" data-role="inc" data-id="${p.id}" ${
+            isInStock ? "" : "disabled"
+          }>+</button>
         </div>
       `;
       list.appendChild(card);
@@ -573,6 +582,11 @@ function buildAlphaNav(letters) {
 function addToCart(productId, delta) {
   const product = state.products.find((p) => p.id === productId);
   if (!product) return;
+  const isInStock =
+    typeof product.in_stock === "boolean"
+      ? product.in_stock
+      : Number(product.quantity || 0) > 0;
+  if (!isInStock || product.quantity <= 0) return;
   if (delta > 0) {
     const btn = document.querySelector(
       `.qty-btn[data-role="inc"][data-id="${productId}"]`

@@ -281,8 +281,12 @@ async function kioskFetchProducts() {
     return;
   }
     const data = await res.json();
-    // сортируем пачки по имени, чтобы иерархия была логичной
-    kioskState.products = data.sort((a, b) =>
+    // В витрине показываем только позиции в наличии.
+    const inStockOnly = data.filter((p) => {
+      if (typeof p.in_stock === "boolean") return p.in_stock;
+      return Number(p.quantity || 0) > 0;
+    });
+    kioskState.products = inStockOnly.sort((a, b) =>
       (a.name || "").localeCompare(b.name || "", "ru")
     );
     kioskState.activeIndex = 0;

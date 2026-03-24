@@ -198,6 +198,7 @@ def list_products(db: Session = Depends(get_db)):
                 code=product.code,
                 price=product.price,
                 quantity=stock.quantity,
+                in_stock=stock.quantity > 0,
                 description=desc,
             )
         )

@@ -5,6 +5,8 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -77,6 +79,21 @@ app.mount(
     StaticFiles(directory=BASE_DIR / "static"),
     name="static",
 )
+
+# Быстрый выигрыш для мобильных сетей: сжатие ответов.
+app.add_middleware(GZipMiddleware, minimum_size=512)
+
+
+class StaticCacheControlMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if (request.url.path or "").startswith("/static/"):
+            # Кэшируем статику надолго; версии ассетов контролируются через ?v=...
+            response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+        return response
+
+
+app.add_middleware(StaticCacheControlMiddleware)
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 

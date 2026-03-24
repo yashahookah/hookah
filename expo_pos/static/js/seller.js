@@ -2,6 +2,7 @@ const state = {
   products: [],
   cart: window.posCart || (window.posCart = {}), // общая корзина с киоском
   search: "",
+  showOutOfStock: true,
 };
 
 let productsClickBound = false;
@@ -583,9 +584,16 @@ function renderProducts() {
 
   // сортируем по имени и разбиваем по группам A–Z
   const groups = {};
+  const byStock = state.showOutOfStock
+    ? state.products
+    : state.products.filter((p) => {
+        if (typeof p.in_stock === "boolean") return p.in_stock;
+        return Number(p.quantity || 0) > 0;
+      });
+
   const filtered = state.search
-    ? state.products.filter((p) => productMatchesQuery(p, state.search))
-    : state.products;
+    ? byStock.filter((p) => productMatchesQuery(p, state.search))
+    : byStock;
 
   const sorted = [...filtered].sort((a, b) =>
     (a.name || "").localeCompare(b.name || "", "en")
@@ -928,6 +936,15 @@ document.addEventListener("DOMContentLoaded", () => {
     searchInput.addEventListener("input", (e) => {
       const value = e.target.value || "";
       state.search = value;
+      renderProducts();
+    });
+  }
+
+  const showOutInput = document.getElementById("seller-show-out-of-stock");
+  if (showOutInput) {
+    showOutInput.checked = !!state.showOutOfStock;
+    showOutInput.addEventListener("change", (e) => {
+      state.showOutOfStock = !!(e.target && e.target.checked);
       renderProducts();
     });
   }

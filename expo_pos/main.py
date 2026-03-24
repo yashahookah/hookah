@@ -1154,7 +1154,24 @@ def update_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    order.status = payload.status.value
+    prev_status = order.status
+    next_status = payload.status.value
+    if prev_status == next_status:
+        return _order_to_out(order)
+
+    # Если заказ отменяют — возвращаем остатки обратно один раз.
+    if next_status == OrderStatus.CANCELED.value and prev_status != OrderStatus.CANCELED.value:
+        if prev_status == OrderStatus.PAID.value:
+            raise HTTPException(status_code=400, detail="Paid order cannot be canceled")
+        for item in order.items:
+            stock = (
+                db.query(Stock).filter(Stock.product_id == item.product_id).first()
+            )
+            if stock:
+                stock.quantity += int(item.quantity or 0)
+                db.add(stock)
+
+    order.status = next_status
     order.updated_at = datetime.utcnow()
     db.add(order)
     db.commit()

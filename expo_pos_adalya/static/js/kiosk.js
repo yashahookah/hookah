@@ -237,7 +237,6 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
-let kioskLastDeltaSign = 0;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -254,13 +253,10 @@ function kioskSetActiveIndex(nextIndex) {
 function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
-  const sign = delta > 0 ? 1 : -1;
-  // один жест пальца = максимум один шаг примерно раз в 360мс
-  if (now - kioskLastChangeAt < 360 && sign === kioskLastDeltaSign) return;
-
+  // как в Original: защита от слишком быстрого пролистывания при жестах по центральной пачке
+  if (now - kioskLastChangeAt < 350) return;
   kioskLastChangeAt = now;
-  kioskLastDeltaSign = sign;
-  kioskSetActiveIndex(kioskState.activeIndex + sign);
+  kioskSetActiveIndex(kioskState.activeIndex + delta);
 }
 
 function kioskGetImageUrl(product) {
@@ -322,9 +318,13 @@ function kioskRenderSlides() {
   });
 
   if (!kioskScrollInitialized) {
-    // Управление сменой активной пачки: горизонтальный свайп по центру
+    // Подбиваем управление как в Original:
+    // - левая половина: вертикальный свайп (один шаг)
+    // - правая половина: медленная прокрутка (halo)
     let touchStartY = null;
     let touchStartX = null;
+    let touchLastY = null;
+    let touchSide = "left"; // "left" | "right"
 
     container.addEventListener(
       "wheel",
@@ -334,14 +334,14 @@ function kioskRenderSlides() {
         const isRight = e.clientX >= midX;
         const delta = e.deltaY;
         if (!isRight) {
-          // левая половина экрана — обычный, но сильно замедленный скролл
-          if (Math.abs(delta) < 80) return;
+          // левая половина экрана — обычный, более "тяжёлый" скролл
+          if (Math.abs(delta) < 40) return;
           kioskChangeByDelta(delta > 0 ? 1 : -1);
         } else {
-          // правая половина — «колесо»: тоже с большим порогом
-          if (Math.abs(delta) < 80) return;
+          // правая половина — медленный, но отдельный скролл
+          if (Math.abs(delta) < 40) return;
           const now = Date.now();
-          if (now - kioskHaloLastChangeAt < 700) return;
+          if (now - kioskHaloLastChangeAt < 400) return;
           kioskHaloLastChangeAt = now;
           const direction = delta > 0 ? 1 : -1;
           kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -356,7 +356,10 @@ function kioskRenderSlides() {
         if (e.touches.length !== 1) return;
         const t = e.touches[0];
         touchStartY = t.clientY;
+        touchLastY = t.clientY;
         touchStartX = t.clientX;
+        const midX = window.innerWidth / 2;
+        touchSide = t.clientX >= midX ? "right" : "left";
       },
       { passive: true }
     );
@@ -364,8 +367,20 @@ function kioskRenderSlides() {
     container.addEventListener(
       "touchmove",
       (e) => {
-        // горизонтальный свайп обрабатываем в touchend, здесь ничего не делаем
         if (touchStartY == null) return;
+        if (touchSide !== "right") return;
+        const t = e.touches[0];
+        const y = t.clientY;
+        if (touchLastY == null) {
+          touchLastY = y;
+          return;
+        }
+        const diff = y - touchLastY;
+        const step = 60; // правая половина — очень медленная прокрутка
+        if (Math.abs(diff) < step) return;
+        const direction = diff < 0 ? 1 : -1;
+        kioskSetActiveIndex(kioskState.activeIndex + direction);
+        touchLastY = y;
       },
       { passive: true }
     );
@@ -374,22 +389,24 @@ function kioskRenderSlides() {
       "touchend",
       (e) => {
         if (touchStartY == null) return;
-        const endTouch = e.changedTouches[0];
-        const endX = endTouch.clientX;
-        const endY = endTouch.clientY;
-        const diffX = endX - touchStartX;
-        const diffY = endY - touchStartY;
-        const thresholdX = 40; // горизонтальный свайп: чуть более живой отклик
+        const endY = e.changedTouches[0].clientY;
+        const diff = endY - touchStartY;
+        const threshold = 60;
 
-        touchStartY = null;
-        touchStartX = null;
-
-        // если вертикальная компонента больше — считаем, что это не наш жест
-        if (Math.abs(diffX) <= Math.abs(diffY)) return;
-        if (Math.abs(diffX) < thresholdX) return;
-
-        // свайп влево – следующая пачка, вправо – предыдущая
-        kioskChangeByDelta(diffX < 0 ? 1 : -1);
+        if (touchSide === "left") {
+          // левая половина — обычный свайп по пачке
+          touchStartY = null;
+          touchLastY = null;
+          touchStartX = null;
+          if (Math.abs(diff) < threshold) return;
+          // свайп вверх – следующая пачка, вниз – предыдущая
+          kioskChangeByDelta(diff < 0 ? 1 : -1);
+        } else {
+          // правая половина — завершаем жест быстрой прокрутки
+          touchStartY = null;
+          touchLastY = null;
+          touchStartX = null;
+        }
       },
       { passive: true }
     );

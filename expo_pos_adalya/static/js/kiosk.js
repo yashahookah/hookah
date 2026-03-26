@@ -481,30 +481,29 @@ function kioskUpdateActiveStack() {
   let activeIndex = kioskState.activeIndex;
   activeIndex = ((activeIndex % total) + total) % total;
 
-  const direction = kioskState.lastDirection || 1;
-
   slides.forEach((slide, index) => {
     slide.className = "kiosk-slide";
     slide.style.pointerEvents = "none";
 
-    if (index === activeIndex) {
-      // активная пачка — едет в центр как поезд
-      slide.classList.add("kiosk-slide--active");
+    // вычисляем позицию относительно активной с учётом «револьверного» круга
+    let delta = index - activeIndex;
+    const half = Math.floor(total / 2);
+    if (delta > half) delta -= total;
+    if (delta < -half) delta += total;
+
+    if (delta === 0) {
+      slide.classList.add("kiosk-slide--pos0");
       slide.style.pointerEvents = "auto";
-
-      // сбрасываем прошлую анимацию
-      slide.classList.remove(
-        "kiosk-slide--enter-from-left",
-        "kiosk-slide--enter-from-right"
-      );
-      // форсируем reflow, чтобы анимация могла переиграть
-      void slide.offsetWidth;
-
-      slide.classList.add(
-        direction >= 0
-          ? "kiosk-slide--enter-from-left"
-          : "kiosk-slide--enter-from-right"
-      );
+    } else if (delta === 1) {
+      slide.classList.add("kiosk-slide--pos1");
+    } else if (delta === 2) {
+      slide.classList.add("kiosk-slide--pos2");
+    } else if (delta === -1) {
+      slide.classList.add("kiosk-slide--pos-1");
+    } else if (delta === -2) {
+      slide.classList.add("kiosk-slide--pos-2");
+    } else {
+      slide.classList.add("kiosk-slide--far");
     }
   });
 

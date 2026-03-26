@@ -316,6 +316,14 @@ def _list_pack_image_stems() -> list[str]:
     if not _STATIC_IMG_DIR.exists() or not _STATIC_IMG_DIR.is_dir():
         return []
 
+    # Технические файлы в static/img, которые не являются товарами.
+    _EXCLUDE_STEMS = {
+        "placeholder-pack",
+        "pay_qr",
+        "favicon",
+        "favicon.svg",
+    }
+
     stems: list[str] = []
     for p in _STATIC_IMG_DIR.iterdir():
         if not p.is_file():
@@ -324,7 +332,7 @@ def _list_pack_image_stems() -> list[str]:
             continue
         stem = p.stem
         # Заглушки/технические файлы исключаем.
-        if stem.lower() in {"placeholder-pack"}:
+        if stem.lower() in _EXCLUDE_STEMS:
             continue
         stems.append(stem)
 

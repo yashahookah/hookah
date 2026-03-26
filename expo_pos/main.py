@@ -1029,13 +1029,18 @@ def list_products(db: Session = Depends(get_db)):
     )
     result: List[ProductOut] = []
     for product, stock in products:
+        # Технические "псевдо-товары" (например, статичный QR для оплаты) никогда не должны
+        # попадать в каталог на клиенте.
+        code_key = (product.code or "").strip().lower()
+        name_key = (product.name or "").strip().lower()
+        if code_key in {"pay-qr"} or name_key in {"pay_qr"}:
+            continue
+
         desc = get_flavor_description(product.name)
         tng_info = _get_tng_info_for_stem(product.name)
         display_name_en = tng_info.get("display_name_en") or product.name
         # Явные исправления отображаемых английских названий.
         # Нужны как "последний слой" даже если CSV/БД содержат старый вариант.
-        code_key = (product.code or "").strip().lower()
-        name_key = (product.name or "").strip().lower()
         if code_key in {"cilantro", "cilantro-pineapple"} or name_key == "cilantro":
             display_name_en = "Cilantro pineapple"
         elif code_key in {"muerte", "muerte-por-arroz"} or name_key == "muerte":

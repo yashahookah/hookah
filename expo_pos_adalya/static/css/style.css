@@ -1182,7 +1182,14 @@ body.kiosk-body-lock {
         opacity 0.35s ease-out;
 }
 
-/* Стек пачек (как в Original) */
+/* Классический режим: одна пачка в центре */
+.kiosk-slide--active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    z-index: 3;
+}
+
+/* Стек пачек (legacy-классы, оставляем для совместимости) */
 .kiosk-slide--pos0 {
     transform: translate(-50%, -50%) translateZ(0) scale(1.04);
     opacity: 1;

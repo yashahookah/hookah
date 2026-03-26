@@ -237,6 +237,7 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
+let kioskLastDeltaSign = 0;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -253,10 +254,13 @@ function kioskSetActiveIndex(nextIndex) {
 function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
-  // как в Original: защита от слишком быстрого пролистывания при жестах по центральной пачке
-  if (now - kioskLastChangeAt < 350) return;
+  const sign = delta > 0 ? 1 : -1;
+  // один жест пальца = максимум один шаг примерно раз в 360мс
+  if (now - kioskLastChangeAt < 360 && sign === kioskLastDeltaSign) return;
+
   kioskLastChangeAt = now;
-  kioskSetActiveIndex(kioskState.activeIndex + delta);
+  kioskLastDeltaSign = sign;
+  kioskSetActiveIndex(kioskState.activeIndex + sign);
 }
 
 function kioskGetImageUrl(product) {
@@ -318,13 +322,9 @@ function kioskRenderSlides() {
   });
 
   if (!kioskScrollInitialized) {
-    // Подбиваем управление как в Original:
-    // - левая половина: вертикальный свайп (один шаг)
-    // - правая половина: медленная прокрутка (halo)
+    // Управление сменой активной пачки: горизонтальный свайп по центру
     let touchStartY = null;
     let touchStartX = null;
-    let touchLastY = null;
-    let touchSide = "left"; // "left" | "right"
 
     container.addEventListener(
       "wheel",
@@ -334,14 +334,14 @@ function kioskRenderSlides() {
         const isRight = e.clientX >= midX;
         const delta = e.deltaY;
         if (!isRight) {
-          // левая половина экрана — обычный, более "тяжёлый" скролл
-          if (Math.abs(delta) < 40) return;
+          // левая половина экрана — обычный, но сильно замедленный скролл
+          if (Math.abs(delta) < 80) return;
           kioskChangeByDelta(delta > 0 ? 1 : -1);
         } else {
-          // правая половина — медленный, но отдельный скролл
-          if (Math.abs(delta) < 40) return;
+          // правая половина — «колесо»: тоже с большим порогом
+          if (Math.abs(delta) < 80) return;
           const now = Date.now();
-          if (now - kioskHaloLastChangeAt < 400) return;
+          if (now - kioskHaloLastChangeAt < 700) return;
           kioskHaloLastChangeAt = now;
           const direction = delta > 0 ? 1 : -1;
           kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -356,10 +356,7 @@ function kioskRenderSlides() {
         if (e.touches.length !== 1) return;
         const t = e.touches[0];
         touchStartY = t.clientY;
-        touchLastY = t.clientY;
         touchStartX = t.clientX;
-        const midX = window.innerWidth / 2;
-        touchSide = t.clientX >= midX ? "right" : "left";
       },
       { passive: true }
     );
@@ -367,20 +364,8 @@ function kioskRenderSlides() {
     container.addEventListener(
       "touchmove",
       (e) => {
+        // горизонтальный свайп обрабатываем в touchend, здесь ничего не делаем
         if (touchStartY == null) return;
-        if (touchSide !== "right") return;
-        const t = e.touches[0];
-        const y = t.clientY;
-        if (touchLastY == null) {
-          touchLastY = y;
-          return;
-        }
-        const diff = y - touchLastY;
-        const step = 60; // правая половина — очень медленная прокрутка
-        if (Math.abs(diff) < step) return;
-        const direction = diff < 0 ? 1 : -1;
-        kioskSetActiveIndex(kioskState.activeIndex + direction);
-        touchLastY = y;
       },
       { passive: true }
     );
@@ -389,24 +374,22 @@ function kioskRenderSlides() {
       "touchend",
       (e) => {
         if (touchStartY == null) return;
-        const endY = e.changedTouches[0].clientY;
-        const diff = endY - touchStartY;
-        const threshold = 60;
+        const endTouch = e.changedTouches[0];
+        const endX = endTouch.clientX;
+        const endY = endTouch.clientY;
+        const diffX = endX - touchStartX;
+        const diffY = endY - touchStartY;
+        const thresholdX = 40; // горизонтальный свайп: чуть более живой отклик
 
-        if (touchSide === "left") {
-          // левая половина — обычный свайп по пачке
-          touchStartY = null;
-          touchLastY = null;
-          touchStartX = null;
-          if (Math.abs(diff) < threshold) return;
-          // свайп вверх – следующая пачка, вниз – предыдущая
-          kioskChangeByDelta(diff < 0 ? 1 : -1);
-        } else {
-          // правая половина — завершаем жест быстрой прокрутки
-          touchStartY = null;
-          touchLastY = null;
-          touchStartX = null;
-        }
+        touchStartY = null;
+        touchStartX = null;
+
+        // если вертикальная компонента больше — считаем, что это не наш жест
+        if (Math.abs(diffX) <= Math.abs(diffY)) return;
+        if (Math.abs(diffX) < thresholdX) return;
+
+        // свайп влево – следующая пачка, вправо – предыдущая
+        kioskChangeByDelta(diffX < 0 ? 1 : -1);
       },
       { passive: true }
     );
@@ -779,6 +762,24 @@ async function kioskSubmitOrder() {
   const entries = Object.entries(kioskState.cart);
   if (!entries.length) return;
 
+  function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    const merged = { ...options, signal: controller.signal };
+    return fetch(url, merged).finally(() => clearTimeout(t));
+  }
+
+  // Сумма нужна для окна оплаты после оформления заказа.
+  let totalAmount = 0;
+  try {
+    entries.forEach(([idStr, qty]) => {
+      const id = parseInt(idStr, 10);
+      const product = kioskState.products.find((p) => p.id === id);
+      if (!product) return;
+      totalAmount += Number(product.price || 0) * Number(qty || 0);
+    });
+  } catch (_) {}
+
   const items = entries.map(([idStr, qty]) => ({
     product_id: parseInt(idStr, 10),
     quantity: qty,
@@ -791,7 +792,7 @@ async function kioskSubmitOrder() {
   msgEl.className = "kiosk-cart-message";
 
   try {
-    const res = await fetch("/api/orders", {
+    const res = await fetchWithTimeout("/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -809,16 +810,24 @@ async function kioskSubmitOrder() {
     const orderId = data && typeof data.id === "number" ? data.id : null;
 
     Object.keys(kioskState.cart).forEach((k) => delete kioskState.cart[k]);
-    await kioskFetchProducts();
+    // Не блокируем UI на обновлении остатков: /api/products может подвисать на хостинге/БД.
+    Promise.resolve()
+      .then(() => kioskFetchProducts())
+      .catch((e) => console.warn("kioskFetchProducts failed after order", e));
     kioskCloseCart();
 
     const summaryText = document.getElementById("kiosk-summary-text");
     summaryText.textContent = "Заказ отправлен, подойдите к стойке";
     if (orderId != null && typeof showOrderToast === "function") {
-      showOrderToast(orderId);
+      showOrderToast(orderId, totalAmount);
     }
   } catch (e) {
     console.error(e);
+    if (e && (e.name === "AbortError" || /aborted/i.test(String(e.message || "")))) {
+      msgEl.textContent = "Сервер долго отвечает. Проверьте связь и попробуйте ещё раз.";
+      msgEl.className = "kiosk-cart-message kiosk-cart-message--error";
+      return;
+    }
     msgEl.textContent =
       e && e.message
         ? e.message

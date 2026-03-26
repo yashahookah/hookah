@@ -2194,6 +2194,82 @@ body.kiosk-body-lock {
     line-height: 1.5;
 }
 
+.order-toast__amount {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #e5e7eb;
+}
+
+.order-toast__amount-value {
+    font-weight: 800;
+    color: #facc15;
+}
+
+.order-toast__pay-toggle {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.order-toast__pay-btn {
+    pointer-events: auto;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(2, 6, 23, 0.35);
+    color: #e5e7eb;
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+}
+
+.order-toast__pay-btn.is-active {
+    border-color: rgba(250, 204, 21, 0.7);
+    background: rgba(250, 204, 21, 0.12);
+    color: #facc15;
+}
+
+.order-toast__pay-panel {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #cbd5e1;
+}
+
+.order-toast__qr {
+    margin: 10px auto 8px;
+    width: 220px;
+    max-width: 76vw;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.order-toast__qr-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.order-toast__qr-missing {
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #0f172a;
+    text-align: center;
+}
+
+.order-toast__qr-hint {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
 .order-toast__number {
     font-weight: 700;
     color: #fbbf24;

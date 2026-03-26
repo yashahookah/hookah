@@ -6,7 +6,7 @@ const state = {
 };
 
 let productsClickBound = false;
-let orderToastTimer = null;
+// showOrderToast теперь общий (см. static/js/order_toast.js)
 
 const RU_NAME_OVERRIDES = {
   "2005 Blueberry": "Черничный кекс",
@@ -74,50 +74,7 @@ function sellerGetImageUrl(product) {
   return "/static/img/placeholder-pack.png";
 }
 
-function showOrderToast(orderId) {
-  const rootId = "order-toast";
-  let root = document.getElementById(rootId);
-  if (!root) {
-    root = document.createElement("div");
-    root.id = rootId;
-    root.className = "order-toast";
-    root.innerHTML = `
-      <div class="order-toast__card">
-        <button type="button" class="order-toast__close" data-role="order-toast-close">×</button>
-        <div class="order-toast__title">Заказ оформлен</div>
-        <div class="order-toast__text">
-          Заказ № <span class="order-toast__number" data-role="order-toast-number"></span>
-          отправлен на сборку. Пожалуйста, <strong>запомните</strong> или <strong>сделайте скриншот</strong> этого номера — он понадобится на выдаче.
-        </div>
-      </div>
-    `;
-    document.body.appendChild(root);
-    const closeBtn = root.querySelector("[data-role='order-toast-close']");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => {
-        root.classList.remove("order-toast--visible");
-        if (orderToastTimer) {
-          clearTimeout(orderToastTimer);
-          orderToastTimer = null;
-        }
-      });
-    }
-  }
-
-  const numEl = root.querySelector("[data-role='order-toast-number']");
-  if (numEl) {
-    numEl.textContent = orderId != null ? String(orderId) : "—";
-  }
-
-  root.classList.add("order-toast--visible");
-  if (orderToastTimer) {
-    clearTimeout(orderToastTimer);
-  }
-  orderToastTimer = setTimeout(() => {
-    root.classList.remove("order-toast--visible");
-    orderToastTimer = null;
-  }, 15000);
-}
+// showOrderToast теперь общий (см. static/js/order_toast.js)
 
 function escapeHtml(s) {
   if (!s) return "";
@@ -679,6 +636,24 @@ async function submitOrder() {
   const entries = Object.entries(state.cart);
   if (entries.length === 0) return;
 
+  function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    const merged = { ...options, signal: controller.signal };
+    return fetch(url, merged).finally(() => clearTimeout(t));
+  }
+
+  // Считаем сумму ДО очистки корзины (нужно для тоста с оплатой).
+  let totalAmount = 0;
+  try {
+    entries.forEach(([idStr, qty]) => {
+      const id = parseInt(idStr, 10);
+      const product = state.products.find((p) => p.id === id);
+      if (!product) return;
+      totalAmount += Number(product.price || 0) * Number(qty || 0);
+    });
+  } catch (_) {}
+
   const items = entries.map(([idStr, qty]) => ({
     product_id: parseInt(idStr, 10),
     quantity: qty,
@@ -691,7 +666,7 @@ async function submitOrder() {
   msgEl.className = "cart-message";
 
   try {
-    const res = await fetch("/api/orders", {
+    const res = await fetchWithTimeout("/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -708,15 +683,25 @@ async function submitOrder() {
     const orderId = data && typeof data.id === "number" ? data.id : null;
 
     Object.keys(state.cart).forEach((k) => delete state.cart[k]);
-    await fetchProducts();
+    // Не блокируем UI на обновлении остатков: /api/products может подвисать на хостинге/БД.
+    Promise.resolve()
+      .then(() => fetchProducts())
+      .catch((e) => console.warn("fetchProducts failed after order", e));
 
     msgEl.textContent = "";
     msgEl.className = "cart-message";
     if (orderId != null) {
-      showOrderToast(orderId);
+      if (typeof window.showOrderToast === "function") {
+        window.showOrderToast(orderId, totalAmount);
+      }
     }
   } catch (e) {
     console.error(e);
+    if (e && (e.name === "AbortError" || /aborted/i.test(String(e.message || "")))) {
+      msgEl.textContent = "Сервер долго отвечает. Проверьте связь и попробуйте ещё раз.";
+      msgEl.className = "cart-message cart-message--error";
+      return;
+    }
     msgEl.textContent =
       e && e.message
         ? e.message

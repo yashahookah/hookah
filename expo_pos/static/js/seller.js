@@ -849,7 +849,7 @@ async function submitOrder() {
   const entries = Object.entries(state.cart);
   if (entries.length === 0) return;
 
-  function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), timeoutMs);
     const merged = { ...options, signal: controller.signal };

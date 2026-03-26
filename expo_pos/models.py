@@ -12,7 +12,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from .database import Base
+try:
+    from .database import Base
+except ImportError:  # pragma: no cover
+    from database import Base
 
 
 class OrderStatus(str, Enum):

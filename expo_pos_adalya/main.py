@@ -10,9 +10,31 @@ from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .database import Base, engine, get_db
-from .models import Order, OrderItem, OrderStatus, Product, Session as DbSession, Stock
-from .schemas import OrderCreate, OrderOut, OrderStatusUpdate, ProductOut
+# Поддерживаем оба режима запуска:
+# - как пакет: `uvicorn expo_pos_adalya.main:app`
+# - из папки: `cd expo_pos_adalya && uvicorn main:app`
+try:
+    from .database import Base, engine, get_db
+    from .models import (
+        Order,
+        OrderItem,
+        OrderStatus,
+        Product,
+        Session as DbSession,
+        Stock,
+    )
+    from .schemas import OrderCreate, OrderOut, OrderStatusUpdate, ProductOut
+except ImportError:  # pragma: no cover
+    from database import Base, engine, get_db
+    from models import (
+        Order,
+        OrderItem,
+        OrderStatus,
+        Product,
+        Session as DbSession,
+        Stock,
+    )
+    from schemas import OrderCreate, OrderOut, OrderStatusUpdate, ProductOut
 from pathlib import Path
 import json
 import re

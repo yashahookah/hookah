@@ -3,7 +3,10 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from .models import OrderStatus
+try:
+    from .models import OrderStatus
+except ImportError:  # pragma: no cover
+    from models import OrderStatus
 
 
 class ProductOut(BaseModel):

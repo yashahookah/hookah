@@ -237,6 +237,10 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
+let kioskRightLastChangeAt = 0;
+const KIOSK_RIGHT_WHEEL_THRESHOLD = 26;
+const KIOSK_RIGHT_TOUCH_STEP = 37;
+const KIOSK_RIGHT_CHANGE_COOLDOWN_MS = 160;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -341,11 +345,11 @@ function kioskRenderSlides() {
           if (Math.abs(delta) < 40) return;
           kioskChangeByDelta(delta > 0 ? 1 : -1);
         } else {
-          // правая половина — как наше колесо (медленный, но отдельный скролл)
-          if (Math.abs(delta) < 40) return;
+          // правая половина — быстрая прокрутка
+          if (Math.abs(delta) < KIOSK_RIGHT_WHEEL_THRESHOLD) return;
           const now = Date.now();
-          if (now - kioskHaloLastChangeAt < 400) return;
-          kioskHaloLastChangeAt = now;
+          if (now - kioskRightLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
+          kioskRightLastChangeAt = now;
           const direction = delta > 0 ? 1 : -1;
           kioskSetActiveIndex(kioskState.activeIndex + direction);
         }
@@ -379,8 +383,11 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = 60; // правая половина — очень медленная прокрутка
+        const step = KIOSK_RIGHT_TOUCH_STEP; // правая половина — быстрая прокрутка
         if (Math.abs(diff) < step) return;
+        const now = Date.now();
+        if (now - kioskRightLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
+        kioskRightLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         touchLastY = y;
@@ -638,9 +645,9 @@ function kioskUpdateAromaHalo() {
       "wheel",
       (e) => {
         e.preventDefault();
-        if (Math.abs(e.deltaY) < 40) return;
+        if (Math.abs(e.deltaY) < KIOSK_RIGHT_WHEEL_THRESHOLD) return;
         const now = Date.now();
-        if (now - kioskHaloLastChangeAt < 400) return;
+        if (now - kioskHaloLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
         kioskHaloLastChangeAt = now;
         const direction = e.deltaY > 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -668,8 +675,11 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 60; // правая половина — очень медленная прокрутка
+        const step = KIOSK_RIGHT_TOUCH_STEP; // halo справа — быстрая прокрутка
         if (Math.abs(diff) < step) return;
+        const now = Date.now();
+        if (now - kioskHaloLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
+        kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         lastY = y;

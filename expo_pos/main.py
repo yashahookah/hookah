@@ -667,6 +667,20 @@ async def favicon():
     return FileResponse(path)
 
 
+@app.get("/pay_qr.png", include_in_schema=False)
+async def pay_qr_png():
+    """
+    Отдельный маршрут для QR оплаты.
+    На некоторых хостингах раздача из /static может ломаться точечно (500),
+    поэтому отдаём файл напрямую через приложение.
+    """
+    path = BASE_DIR / "static" / "img" / "qr" / "pay_qr.png"
+    if not path.exists():
+        # Фолбэк на старое расположение, если вдруг файл лежит в корне img.
+        path = BASE_DIR / "static" / "img" / "pay_qr.png"
+    return FileResponse(path)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
     db = next(get_db())

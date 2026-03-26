@@ -46,3 +46,34 @@ trending_topics.json
 # Temporary files
 *.tmp
 *.bak
+
+# Cursor / local tooling caches (repo is in home dir)
+.cursor/
+.cache/
+.ccassist/
+.npm/
+.nvm/
+.ollama/
+.ssh/
+.volta/
+.yandex/
+.cups/
+.zsh_sessions/
+.zsh_history
+.zcompdump*
+.CFUserTextEncoding
+
+# Local OS folders (avoid tracking home directory contents)
+Desktop/
+Documents/
+Downloads/
+Library/
+Movies/
+Music/
+Pictures/
+Public/
+Applications/
+
+# Common large artifacts
+*.zip
+*.mp4

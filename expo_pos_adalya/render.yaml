@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: expo-pos
+    env: python
+    plan: free
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DB_PATH
+        value: /data/expo_pos.db
+    disk:
+      name: expo-data
+      mountPath: /data
+      sizeGB: 1

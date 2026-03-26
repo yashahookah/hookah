@@ -5,14 +5,14 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from database import Base, engine, get_db
-from models import Order, OrderItem, OrderStatus, Product, Session as DbSession, Stock
-from schemas import OrderCreate, OrderOut, OrderStatusUpdate, ProductOut
+from .database import Base, engine, get_db
+from .models import Order, OrderItem, OrderStatus, Product, Session as DbSession, Stock
+from .schemas import OrderCreate, OrderOut, OrderStatusUpdate, ProductOut
 from pathlib import Path
 import json
 import re
@@ -80,16 +80,15 @@ app.mount(
     name="static",
 )
 
-# Сжимаем ответы (HTML/CSS/JS/JSON) для более быстрой загрузки на мобильных сетях.
+# Быстрый выигрыш для мобильных сетей: сжатие ответов.
 app.add_middleware(GZipMiddleware, minimum_size=512)
 
 
 class StaticCacheControlMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        path = request.url.path or ""
-        if path.startswith("/static/"):
-            # Агрессивный кэш для статики; query-параметры v=... уже используются в шаблонах.
+        if (request.url.path or "").startswith("/static/"):
+            # Кэшируем статику надолго; версии ассетов контролируются через ?v=...
             response.headers["Cache-Control"] = "public, max-age=2592000, immutable"
         return response
 

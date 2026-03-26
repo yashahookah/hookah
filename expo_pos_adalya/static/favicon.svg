@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="yellowCard" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fde047"/>
+      <stop offset="1" stop-color="#facc15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Жёлтая «карточка» в стиле Cane Mint -->
+  <rect x="6" y="10" width="52" height="44" rx="10" fill="url(#yellowCard)"/>
+
+  <!-- Лёгкая тень снизу -->
+  <ellipse cx="32" cy="51" rx="18" ry="3.2" fill="#000000" opacity="0.22"/>
+
+  <!-- Рукописный текст Expo -->
+  <text x="15" y="30"
+        font-family="'Caveat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="18"
+        font-weight="600"
+        fill="#111827">
+    Expo
+  </text>
+
+  <!-- Подпись POS чуть меньшим кеглем -->
+  <text x="18" y="40"
+        font-family="'Caveat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="14"
+        font-weight="600"
+        fill="#111827">
+    POS
+  </text>
+</svg>
+
+

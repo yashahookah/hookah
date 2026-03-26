@@ -1,4 +1,6 @@
 from datetime import datetime
+import os
+import time
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -8,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from sqlalchemy import func
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from database import Base, engine, get_db
@@ -114,59 +117,69 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     db = next(get_db())
     try:
-        # Полностью очищаем каталог и остатки для отдельного проекта Adalya
-        db.query(OrderItem).delete()
-        db.query(Order).delete()
-        db.query(Stock).delete()
-        db.query(Product).delete()
-        db.commit()
+        # В облаке Adalya часто запускается/перезапускается много раз.
+        # Чтобы не жечь CPU/диск и не ловить локи SQLite, не пересоздаём каталог каждый раз.
+        force_reset = str(os.environ.get("ADALYA_RESET_DB", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        has_products = db.query(Product.id).limit(1).first() is not None
+        if force_reset or not has_products:
+            if force_reset:
+                # Полностью очищаем каталог и остатки (вручную по флагу).
+                db.query(OrderItem).delete()
+                db.query(Order).delete()
+                db.query(Stock).delete()
+                db.query(Product).delete()
+                db.commit()
 
-        # Только ароматы Adalya, которые ты прислал
-        sample_products = [
-            {"name": "Berrymix", "code": "berrymix", "price": 750.0, "quantity": 50},
-            {"name": "Cactus", "code": "kaktus", "price": 750.0, "quantity": 50},
-            {"name": "Caramel", "code": "karamel", "price": 750.0, "quantity": 50},
-            {"name": "Champagne", "code": "love66", "price": 750.0, "quantity": 50},
-            {"name": "Pineapple", "code": "ledy_killer", "price": 750.0, "quantity": 50},
-            {"name": "Ice Raspberry", "code": "ledy_banan_milk", "price": 750.0, "quantity": 50},
-            {"name": "Lemon Pie", "code": "lemon_pie", "price": 750.0, "quantity": 50},
-            {"name": "Milk", "code": "moloko", "price": 750.0, "quantity": 50},
-            {"name": "Orange", "code": "citrus_mix", "price": 750.0, "quantity": 50},
-            {"name": "Strawberry", "code": "strawberry", "price": 750.0, "quantity": 50},
-            {"name": "Ice", "code": "ice", "price": 750.0, "quantity": 50},
-            {"name": "Mango Tango", "code": "mango_tango", "price": 750.0, "quantity": 50},
-            {"name": "Mint", "code": "mint", "price": 750.0, "quantity": 50},
-        ]
+            # Только ароматы Adalya, которые ты прислал
+            sample_products = [
+                {"name": "Berrymix", "code": "berrymix", "price": 750.0, "quantity": 50},
+                {"name": "Cactus", "code": "kaktus", "price": 750.0, "quantity": 50},
+                {"name": "Caramel", "code": "karamel", "price": 750.0, "quantity": 50},
+                {"name": "Champagne", "code": "love66", "price": 750.0, "quantity": 50},
+                {"name": "Pineapple", "code": "ledy_killer", "price": 750.0, "quantity": 50},
+                {"name": "Ice Raspberry", "code": "ledy_banan_milk", "price": 750.0, "quantity": 50},
+                {"name": "Lemon Pie", "code": "lemon_pie", "price": 750.0, "quantity": 50},
+                {"name": "Milk", "code": "moloko", "price": 750.0, "quantity": 50},
+                {"name": "Orange", "code": "citrus_mix", "price": 750.0, "quantity": 50},
+                {"name": "Strawberry", "code": "strawberry", "price": 750.0, "quantity": 50},
+                {"name": "Ice", "code": "ice", "price": 750.0, "quantity": 50},
+                {"name": "Mango Tango", "code": "mango_tango", "price": 750.0, "quantity": 50},
+                {"name": "Mint", "code": "mint", "price": 750.0, "quantity": 50},
+            ]
 
-        for idx, p in enumerate(sample_products):
-            product = Product(
-                name=p["name"],
-                code=p["code"],
-                price=p["price"],
-                sort_order=idx,
-                is_active=True,
+            for idx, p in enumerate(sample_products):
+                product = Product(
+                    name=p["name"],
+                    code=p["code"],
+                    price=p["price"],
+                    sort_order=idx,
+                    is_active=True,
+                )
+                db.add(product)
+                db.flush()
+                stock = Stock(
+                    product_id=product.id,
+                    quantity=p["quantity"],
+                    min_threshold=5,
+                )
+                db.add(stock)
+
+            active_session = (
+                db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
             )
-            db.add(product)
-            db.flush()
-            stock = Stock(
-                product_id=product.id,
-                quantity=p["quantity"],
-                min_threshold=5,
-            )
-            db.add(stock)
+            if not active_session:
+                session = DbSession(
+                    name="Выставка - день 1",
+                    starts_at=datetime.utcnow(),
+                    is_active=True,
+                )
+                db.add(session)
 
-        active_session = (
-            db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
-        )
-        if not active_session:
-            session = DbSession(
-                name="Выставка - день 1",
-                starts_at=datetime.utcnow(),
-                is_active=True,
-            )
-            db.add(session)
-
-        db.commit()
+            db.commit()
     finally:
         db.close()
 
@@ -232,75 +245,89 @@ def get_active_session(db: Session = Depends(get_db)):
 
 @app.post("/api/orders", response_model=OrderOut)
 def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
-    if not payload.items:
-        raise HTTPException(status_code=400, detail="Order must contain items")
+    def _is_sqlite_locked(err: Exception) -> bool:
+        msg = str(err).lower()
+        return "database is locked" in msg or "database is busy" in msg or "sqlite_busy" in msg
 
-    if payload.session_id is not None:
-        session = db.query(DbSession).filter(DbSession.id == payload.session_id).first()
-    else:
-        session = db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
+    for attempt in range(8):
+        try:
+            if not payload.items:
+                raise HTTPException(status_code=400, detail="Order must contain items")
 
-    if not session:
-        raise HTTPException(status_code=400, detail="Session not found")
+            if payload.session_id is not None:
+                session = (
+                    db.query(DbSession).filter(DbSession.id == payload.session_id).first()
+                )
+            else:
+                session = db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
 
-    product_ids = [item.product_id for item in payload.items]
-    products = (
-        db.query(Product, Stock)
-        .join(Stock, Stock.product_id == Product.id)
-        .filter(Product.id.in_(product_ids))
-        .all()
-    )
-    products_map = {p.id: (p, s) for p, s in products}
+            if not session:
+                raise HTTPException(status_code=400, detail="Session not found")
 
-    for item in payload.items:
-        if item.product_id not in products_map:
-            raise HTTPException(
-                status_code=400, detail=f"Product {item.product_id} not found"
+            product_ids = [item.product_id for item in payload.items]
+            products = (
+                db.query(Product, Stock)
+                .join(Stock, Stock.product_id == Product.id)
+                .filter(Product.id.in_(product_ids))
+                .all()
             )
-        _, stock = products_map[item.product_id]
-        if item.quantity <= 0:
-            raise HTTPException(
-                status_code=400, detail="Quantity must be greater than zero"
+            products_map = {p.id: (p, s) for p, s in products}
+
+            for item in payload.items:
+                if item.product_id not in products_map:
+                    raise HTTPException(
+                        status_code=400, detail=f"Product {item.product_id} not found"
+                    )
+                _, stock = products_map[item.product_id]
+                if item.quantity <= 0:
+                    raise HTTPException(
+                        status_code=400, detail="Quantity must be greater than zero"
+                    )
+                if stock.quantity < item.quantity:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Not enough stock for product {item.product_id}",
+                    )
+
+            order = Order(
+                session_id=session.id,
+                status=OrderStatus.NEW.value,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
             )
-        if stock.quantity < item.quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Not enough stock for product {item.product_id}",
-            )
+            db.add(order)
+            db.flush()
 
-    order = Order(
-        session_id=session.id,
-        status=OrderStatus.NEW.value,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-    )
-    db.add(order)
-    db.flush()
+            total_amount = 0.0
+            order_items: List[OrderItem] = []
 
-    total_amount = 0.0
-    order_items: List[OrderItem] = []
+            for item in payload.items:
+                product, stock = products_map[item.product_id]
+                line_amount = product.price * item.quantity
+                total_amount += line_amount
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=product.id,
+                    quantity=item.quantity,
+                    unit_price=product.price,
+                    line_amount=line_amount,
+                )
+                order_items.append(order_item)
+                stock.quantity -= item.quantity
+                db.add(stock)
 
-    for item in payload.items:
-        product, stock = products_map[item.product_id]
-        line_amount = product.price * item.quantity
-        total_amount += line_amount
-        order_item = OrderItem(
-            order_id=order.id,
-            product_id=product.id,
-            quantity=item.quantity,
-            unit_price=product.price,
-            line_amount=line_amount,
-        )
-        order_items.append(order_item)
-        stock.quantity -= item.quantity
-        db.add(stock)
+            order.total_amount = total_amount
+            db.add_all(order_items)
+            db.commit()
+            db.refresh(order)
 
-    order.total_amount = total_amount
-    db.add_all(order_items)
-    db.commit()
-    db.refresh(order)
-
-    return _order_to_out(order)
+            return _order_to_out(order)
+        except OperationalError as e:
+            db.rollback()
+            if attempt < 7 and _is_sqlite_locked(e):
+                time.sleep(0.15 * (attempt + 1))
+                continue
+            raise
 
 
 @app.get("/api/orders", response_model=List[OrderOut])

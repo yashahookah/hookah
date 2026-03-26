@@ -1170,18 +1170,53 @@ body.kiosk-body-lock {
     top: 50%;
     width: 100%;
     max-width: 520px;
-    transform-origin: center center;
-    transform: translate(-50%, -50%) scale(0.95);
-    opacity: 0;
-    pointer-events: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    transform-origin: center center;
+    transform: translate(-50%, -50%) translateZ(-260px) scale(0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform 0.45s cubic-bezier(0.19, 1, 0.22, 1),
+        opacity 0.35s ease-out;
 }
 
-.kiosk-slide--active {
+/* Стек пачек (как в Original) */
+.kiosk-slide--pos0 {
+    transform: translate(-50%, -50%) translateZ(0) scale(1.04);
     opacity: 1;
-    pointer-events: auto;
+    z-index: 3;
+}
+.kiosk-slide--pos1 {
+    /* следующая пачка слегка выглядывает снизу, ближе к пользователю */
+    transform: translate(-50%, -35%) translateZ(-110px) scale(0.94);
+    opacity: 0.9;
+    z-index: 2;
+}
+.kiosk-slide--pos2 {
+    /* ещё следующая — глубже и чуть ниже */
+    transform: translate(-50%, -25%) translateZ(-190px) scale(0.9);
+    opacity: 0.6;
+    z-index: 1;
+}
+.kiosk-slide--pos-1 {
+    /* предыдущая пачка выглядывает сверху */
+    transform: translate(-50%, -65%) translateZ(-110px) scale(0.94);
+    opacity: 0.9;
+    z-index: 2;
+}
+.kiosk-slide--pos-2 {
+    /* ещё предыдущая — выше и дальше */
+    transform: translate(-50%, -75%) translateZ(-190px) scale(0.9);
+    opacity: 0.6;
+    z-index: 1;
+}
+.kiosk-slide--far {
+    /* остальные далеко в глубине, почти не видны */
+    transform: translate(-50%, -50%) translateZ(-260px) scale(0.8);
+    opacity: 0;
+    z-index: 0;
 }
 
 @keyframes kioskSlideEnterFromLeft {

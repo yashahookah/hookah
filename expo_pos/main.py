@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -6,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from database import Base, engine, get_db
@@ -1062,75 +1064,91 @@ def get_active_session(db: Session = Depends(get_db)):
 
 @app.post("/api/orders", response_model=OrderOut)
 def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
-    if not payload.items:
-        raise HTTPException(status_code=400, detail="Order must contain items")
+    def _is_sqlite_locked(err: Exception) -> bool:
+        msg = str(err).lower()
+        return "database is locked" in msg or "database is busy" in msg or "sqlite_busy" in msg
 
-    if payload.session_id is not None:
-        session = db.query(DbSession).filter(DbSession.id == payload.session_id).first()
-    else:
-        session = db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
+    # На хостинге SQLite иногда ловит write-lock под нагрузкой.
+    # Вместо "вечного" ожидания делаем короткие ретраи с backoff.
+    for attempt in range(8):
+        try:
+            if not payload.items:
+                raise HTTPException(status_code=400, detail="Order must contain items")
 
-    if not session:
-        raise HTTPException(status_code=400, detail="Session not found")
+            if payload.session_id is not None:
+                session = (
+                    db.query(DbSession).filter(DbSession.id == payload.session_id).first()
+                )
+            else:
+                session = db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
 
-    product_ids = [item.product_id for item in payload.items]
-    products = (
-        db.query(Product, Stock)
-        .join(Stock, Stock.product_id == Product.id)
-        .filter(Product.id.in_(product_ids))
-        .all()
-    )
-    products_map = {p.id: (p, s) for p, s in products}
+            if not session:
+                raise HTTPException(status_code=400, detail="Session not found")
 
-    for item in payload.items:
-        if item.product_id not in products_map:
-            raise HTTPException(
-                status_code=400, detail=f"Product {item.product_id} not found"
+            product_ids = [item.product_id for item in payload.items]
+            products = (
+                db.query(Product, Stock)
+                .join(Stock, Stock.product_id == Product.id)
+                .filter(Product.id.in_(product_ids))
+                .all()
             )
-        _, stock = products_map[item.product_id]
-        if item.quantity <= 0:
-            raise HTTPException(
-                status_code=400, detail="Quantity must be greater than zero"
+            products_map = {p.id: (p, s) for p, s in products}
+
+            for item in payload.items:
+                if item.product_id not in products_map:
+                    raise HTTPException(
+                        status_code=400, detail=f"Product {item.product_id} not found"
+                    )
+                _, stock = products_map[item.product_id]
+                if item.quantity <= 0:
+                    raise HTTPException(
+                        status_code=400, detail="Quantity must be greater than zero"
+                    )
+                if stock.quantity < item.quantity:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Not enough stock for product {item.product_id}",
+                    )
+
+            order = Order(
+                session_id=session.id,
+                status=OrderStatus.NEW.value,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
             )
-        if stock.quantity < item.quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Not enough stock for product {item.product_id}",
-            )
+            db.add(order)
+            db.flush()
 
-    order = Order(
-        session_id=session.id,
-        status=OrderStatus.NEW.value,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-    )
-    db.add(order)
-    db.flush()
+            total_amount = 0.0
+            order_items: List[OrderItem] = []
 
-    total_amount = 0.0
-    order_items: List[OrderItem] = []
+            for item in payload.items:
+                product, stock = products_map[item.product_id]
+                line_amount = product.price * item.quantity
+                total_amount += line_amount
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=product.id,
+                    quantity=item.quantity,
+                    unit_price=product.price,
+                    line_amount=line_amount,
+                )
+                order_items.append(order_item)
+                stock.quantity -= item.quantity
+                db.add(stock)
 
-    for item in payload.items:
-        product, stock = products_map[item.product_id]
-        line_amount = product.price * item.quantity
-        total_amount += line_amount
-        order_item = OrderItem(
-            order_id=order.id,
-            product_id=product.id,
-            quantity=item.quantity,
-            unit_price=product.price,
-            line_amount=line_amount,
-        )
-        order_items.append(order_item)
-        stock.quantity -= item.quantity
-        db.add(stock)
+            order.total_amount = total_amount
+            db.add_all(order_items)
+            db.commit()
+            db.refresh(order)
 
-    order.total_amount = total_amount
-    db.add_all(order_items)
-    db.commit()
-    db.refresh(order)
-
-    return _order_to_out(order)
+            return _order_to_out(order)
+        except OperationalError as e:
+            db.rollback()
+            if attempt < 7 and _is_sqlite_locked(e):
+                time.sleep(0.15 * (attempt + 1))
+                continue
+            raise
 
 
 @app.get("/api/orders", response_model=List[OrderOut])

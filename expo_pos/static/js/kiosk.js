@@ -1114,6 +1114,17 @@ async function kioskSubmitOrder() {
   const entries = Object.entries(kioskState.cart);
   if (!entries.length) return;
 
+  // Сумма нужна для окна оплаты после оформления заказа.
+  let totalAmount = 0;
+  try {
+    entries.forEach(([idStr, qty]) => {
+      const id = parseInt(idStr, 10);
+      const product = kioskState.products.find((p) => p.id === id);
+      if (!product) return;
+      totalAmount += Number(product.price || 0) * Number(qty || 0);
+    });
+  } catch (_) {}
+
   const items = entries.map(([idStr, qty]) => ({
     product_id: parseInt(idStr, 10),
     quantity: qty,
@@ -1150,7 +1161,7 @@ async function kioskSubmitOrder() {
     const summaryText = document.getElementById("kiosk-summary-text");
     summaryText.textContent = "Заказ отправлен, подойдите к стойке";
     if (orderId != null && typeof showOrderToast === "function") {
-      showOrderToast(orderId);
+      showOrderToast(orderId, totalAmount);
     }
   } catch (e) {
     console.error(e);

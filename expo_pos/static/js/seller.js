@@ -849,6 +849,13 @@ async function submitOrder() {
   const entries = Object.entries(state.cart);
   if (entries.length === 0) return;
 
+  function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    const merged = { ...options, signal: controller.signal };
+    return fetch(url, merged).finally(() => clearTimeout(t));
+  }
+
   // Считаем сумму ДО очистки корзины (нужно для тоста с оплатой).
   let totalAmount = 0;
   try {
@@ -872,7 +879,7 @@ async function submitOrder() {
   msgEl.className = "cart-message";
 
   try {
-    const res = await fetch("/api/orders", {
+    const res = await fetchWithTimeout("/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -889,7 +896,10 @@ async function submitOrder() {
     const orderId = data && typeof data.id === "number" ? data.id : null;
 
     Object.keys(state.cart).forEach((k) => delete state.cart[k]);
-    await fetchProducts();
+    // Не блокируем UI на обновлении остатков: /api/products может подвисать на хостинге/БД.
+    Promise.resolve()
+      .then(() => fetchProducts())
+      .catch((e) => console.warn("fetchProducts failed after order", e));
 
     msgEl.textContent = "";
     msgEl.className = "cart-message";
@@ -900,6 +910,11 @@ async function submitOrder() {
     }
   } catch (e) {
     console.error(e);
+    if (e && (e.name === "AbortError" || /aborted/i.test(String(e.message || "")))) {
+      msgEl.textContent = "Сервер долго отвечает. Проверьте связь и попробуйте ещё раз.";
+      msgEl.className = "cart-message cart-message--error";
+      return;
+    }
     msgEl.textContent =
       e && e.message
         ? e.message

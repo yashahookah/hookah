@@ -137,7 +137,7 @@
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       hide(root);
-    }, 15000);
+    }, 30000);
   };
 })();
 

@@ -1114,6 +1114,13 @@ async function kioskSubmitOrder() {
   const entries = Object.entries(kioskState.cart);
   if (!entries.length) return;
 
+  function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    const merged = { ...options, signal: controller.signal };
+    return fetch(url, merged).finally(() => clearTimeout(t));
+  }
+
   // Сумма нужна для окна оплаты после оформления заказа.
   let totalAmount = 0;
   try {
@@ -1137,7 +1144,7 @@ async function kioskSubmitOrder() {
   msgEl.className = "kiosk-cart-message";
 
   try {
-    const res = await fetch("/api/orders", {
+    const res = await fetchWithTimeout("/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1155,7 +1162,10 @@ async function kioskSubmitOrder() {
     const orderId = data && typeof data.id === "number" ? data.id : null;
 
     Object.keys(kioskState.cart).forEach((k) => delete kioskState.cart[k]);
-    await kioskFetchProducts();
+    // Не блокируем UI на обновлении остатков: /api/products может подвисать на хостинге/БД.
+    Promise.resolve()
+      .then(() => kioskFetchProducts())
+      .catch((e) => console.warn("kioskFetchProducts failed after order", e));
     kioskCloseCart();
 
     const summaryText = document.getElementById("kiosk-summary-text");
@@ -1165,6 +1175,11 @@ async function kioskSubmitOrder() {
     }
   } catch (e) {
     console.error(e);
+    if (e && (e.name === "AbortError" || /aborted/i.test(String(e.message || "")))) {
+      msgEl.textContent = "Сервер долго отвечает. Проверьте связь и попробуйте ещё раз.";
+      msgEl.className = "kiosk-cart-message kiosk-cart-message--error";
+      return;
+    }
     msgEl.textContent =
       e && e.message
         ? e.message

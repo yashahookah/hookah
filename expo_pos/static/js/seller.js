@@ -95,7 +95,8 @@ function sellerGetImageCandidates(product) {
   const name = product && product.name ? String(product.name).trim() : "";
   if (!name) return ["/static/img/placeholder-pack.png"];
   // Только точное совпадение с именем файла — никаких "подборов" альтернатив.
-  return [`/static/img/${encodeURIComponent(name)}.png`];
+  const v = name === "Мундштук NoxPipe x Tangiers" ? "mouthpiece-20260327" : "";
+  return [`/static/img/${encodeURIComponent(name)}.png${v ? `?v=${v}` : ""}`];
 }
 
 function sellerGetImageUrl(product) {

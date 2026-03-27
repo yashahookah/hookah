@@ -586,14 +586,16 @@ function kioskGetImageUrl(product) {
   // Если файлов нет — покажется placeholder (а затем можно будет скрыть/починить).
   const name = product && product.name ? String(product.name).trim() : "";
   if (!name) return "/static/img/placeholder-pack.png";
-  return `/static/img/${encodeURIComponent(name)}.png`;
+  const v = name === "Мундштук NoxPipe x Tangiers" ? "mouthpiece-20260327" : "";
+  return `/static/img/${encodeURIComponent(name)}.png${v ? `?v=${v}` : ""}`;
 }
 
 function kioskGetImageCandidates(product) {
   const name = product && product.name ? String(product.name).trim() : "";
   if (!name) return ["/static/img/placeholder-pack.png"];
   // Только точное совпадение с именем файла — никаких "подборов" и переобрезок.
-  return [`/static/img/${encodeURIComponent(name)}.png`];
+  const v = name === "Мундштук NoxPipe x Tangiers" ? "mouthpiece-20260327" : "";
+  return [`/static/img/${encodeURIComponent(name)}.png${v ? `?v=${v}` : ""}`];
 }
 
 async function kioskFetchProducts() {

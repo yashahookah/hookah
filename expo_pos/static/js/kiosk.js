@@ -809,6 +809,29 @@ function kioskChangeQty(productId, delta) {
   kioskRenderSummary();
 }
 
+function kioskGetGiftContext() {
+  let tobaccoQty = 0;
+  Object.entries(kioskState.cart).forEach(([idStr, qty]) => {
+    const id = parseInt(idStr, 10);
+    const product = kioskState.products.find((p) => p.id === id);
+    if (!product) return;
+    const code = String(product.code || "").toLowerCase();
+    if (!code.startsWith("merch-")) {
+      tobaccoQty += Number(qty || 0);
+    }
+  });
+
+  const giftProduct = kioskState.products.find((p) => {
+    const code = String(p.code || "").toLowerCase();
+    const inStock =
+      typeof p.in_stock === "boolean" ? p.in_stock : Number(p.quantity || 0) > 0;
+    return code.startsWith("merch-dakimakura") && inStock && Number(p.quantity || 0) > 0;
+  });
+
+  const eligible = tobaccoQty >= 10 && !!giftProduct;
+  return { eligible, tobaccoQty, giftProduct };
+}
+
 function kioskUpdateActiveStack() {
   const container = document.getElementById("kiosk-slides");
   const slides = Array.from(container.querySelectorAll(".kiosk-slide"));
@@ -1036,6 +1059,7 @@ function kioskRenderSummary() {
 
   let totalQty = 0;
   let totalAmount = 0;
+  const giftCtx = kioskGetGiftContext();
   entries.forEach(([idStr, qty]) => {
     const id = parseInt(idStr, 10);
     const product = kioskState.products.find((p) => p.id === id);
@@ -1044,9 +1068,9 @@ function kioskRenderSummary() {
     totalAmount += product.price * qty;
   });
 
-  summaryText.textContent = `Вы выбрали ${totalQty} шт. на ${totalAmount.toFixed(
-    0
-  )} ₽`;
+  summaryText.textContent = `Вы выбрали ${totalQty} шт. на ${totalAmount.toFixed(0)} ₽${
+    giftCtx.eligible ? " + подушка в подарок" : ""
+  }`;
   openBtn.disabled = false;
   kioskRenderCart();
 }
@@ -1069,6 +1093,7 @@ function kioskRenderCart() {
 
   emptyEl.style.display = "none";
   let totalAmount = 0;
+  const giftCtx = kioskGetGiftContext();
 
   entries.forEach(([idStr, qty]) => {
     const id = parseInt(idStr, 10);
@@ -1089,6 +1114,20 @@ function kioskRenderCart() {
     `;
     itemsEl.appendChild(li);
   });
+
+  if (giftCtx.eligible && giftCtx.giftProduct) {
+    const gift = giftCtx.giftProduct;
+    const li = document.createElement("li");
+    li.className = "kiosk-cart-item";
+    li.innerHTML = `
+      <div>
+        <div class="kiosk-cart-item-name">${gift.name} 🎁</div>
+        <div class="kiosk-cart-item-meta">1 × 0 ₽ (подарок за 10 пачек)</div>
+      </div>
+      <div class="kiosk-cart-item-amount">0 ₽</div>
+    `;
+    itemsEl.appendChild(li);
+  }
 
   totalEl.textContent = `${totalAmount.toFixed(0)} ₽`;
   submitBtn.disabled = false;
@@ -1145,6 +1184,9 @@ async function kioskSubmitOrder() {
     quantity: qty,
   }));
   const payment_method = kioskGetSelectedPaymentMethod();
+  const giftCtx = kioskGetGiftContext();
+  const gift_product_id =
+    giftCtx.eligible && giftCtx.giftProduct ? giftCtx.giftProduct.id : null;
 
   const msgEl = document.getElementById("kiosk-cart-message");
   const btn = document.getElementById("kiosk-submit-order");
@@ -1158,7 +1200,7 @@ async function kioskSubmitOrder() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ items, payment_method }),
+      body: JSON.stringify({ items, payment_method, gift_product_id }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

@@ -48,6 +48,54 @@ BASE_DIR = Path(__file__).resolve().parent
 _STATIC_IMG_DIR = BASE_DIR / "static" / "img"
 _STATIC_IMG_FILES_LOWER: set[str] | None = None
 
+TOBACCO_PRICE = 2900.0
+
+# Мерч-позиции (имена должны точно совпадать со stem файлов в static/img).
+MERCH_PRODUCTS: dict[str, dict[str, str | float | int]] = {
+    "Дакимакура Kashmir Peach": {
+        "code": "merch-dakimakura-kashmir-peach",
+        "display_name": "Подушка",
+        "description": "Название подушки Kashmir Peach",
+        "price": 5000.0,
+        "sort_tail": 1,
+    },
+    "Дакимакура Танж Cane mint": {
+        "code": "merch-dakimakura-cane-mint",
+        "display_name": "Подушка",
+        "description": "Название подушки Cane mint",
+        "price": 5000.0,
+        "sort_tail": 2,
+    },
+    "Дакимакура Танж Maraschino Cherry": {
+        "code": "merch-dakimakura-maraschino-cherry",
+        "display_name": "Подушка",
+        "description": "Название подушки Maraschino Cherry",
+        "price": 5000.0,
+        "sort_tail": 3,
+    },
+    "Дакимакура Танж Ololiui": {
+        "code": "merch-dakimakura-ololiui",
+        "display_name": "Подушка",
+        "description": "Название подушки Ololiui",
+        "price": 5000.0,
+        "sort_tail": 4,
+    },
+    "Дакимакура Танж Papaya Sorbet": {
+        "code": "merch-dakimakura-papaya-sorbet",
+        "display_name": "Подушка",
+        "description": "Название подушки Papaya Sorbet",
+        "price": 5000.0,
+        "sort_tail": 5,
+    },
+    "Мундштук NoxPipe x Tangiers": {
+        "code": "merch-mouthpiece-noxpipe-x-tangiers",
+        "display_name": "Мундштук",
+        "description": "NoxPipe x Tangiers",
+        "price": 10000.0,
+        "sort_tail": 6,
+    },
+}
+
 # Данные по вкусам (названия/описания) из Excel выгрузки.
 _TNG_CSV_PATH = BASE_DIR / "tng_product_info.csv"
 _TNG_LOADED = False
@@ -309,6 +357,17 @@ def _normalize_filename_key_py(s: str) -> str:
     return s2
 
 
+def _normalize_unicode_code_py(s: str) -> str:
+    """Код для файлов с кириллицей и спецсимволами."""
+    if not s:
+        return ""
+    s2 = str(s).strip().lower()
+    s2 = s2.replace("’", "").replace("'", "")
+    s2 = re.sub(r"[^0-9a-zа-я]+", "-", s2, flags=re.I)
+    s2 = re.sub(r"-+", "-", s2).strip("-")
+    return s2
+
+
 def _product_packaging_candidates_exist(product_name: str | None, product_code: str | None) -> bool:
     """Есть ли картинка упаковки хотя бы в одном ожидаемом имени."""
     img_index = _load_static_img_files_index()
@@ -376,7 +435,11 @@ def _sync_products_with_pack_images(db: Session) -> None:
     # name -> code (уникальный для БД, т.к. `Product.code` unique)
     name_by_code: dict[str, str] = {}
     for name in pack_stems:
-        base_code = _normalize_filename_key_py(name)
+        merch = MERCH_PRODUCTS.get(name)
+        if merch and isinstance(merch.get("code"), str):
+            base_code = str(merch.get("code"))
+        else:
+            base_code = _normalize_filename_key_py(name) or _normalize_unicode_code_py(name)
         if not base_code:
             continue
 
@@ -392,7 +455,7 @@ def _sync_products_with_pack_images(db: Session) -> None:
 
     active_codes = set(name_by_code.keys())
 
-    default_price = 3000.0
+    default_price = TOBACCO_PRICE
     default_qty = 50
     default_min_threshold = 5
 
@@ -406,18 +469,34 @@ def _sync_products_with_pack_images(db: Session) -> None:
         p.is_active = bool(p.code in active_codes)
         if p.code in name_by_code:
             p.name = name_by_code[p.code]
+            merch = MERCH_PRODUCTS.get(p.name)
+            if merch and isinstance(merch.get("price"), (int, float)):
+                p.price = float(merch["price"])
+            else:
+                p.price = TOBACCO_PRICE
 
     # Добавляем отсутствующие и гарантируем stock.
-    # Делаем sort_order стабильным: по алфавиту имён файлов.
-    stem_order = {stem: i for i, stem in enumerate(pack_stems)}
+    # Табак по алфавиту, мерч уводим в конец.
+    merch_count = len([s for s in pack_stems if s in MERCH_PRODUCTS])
+    tobacco_stems = [s for s in pack_stems if s not in MERCH_PRODUCTS]
+    stem_order = {stem: i for i, stem in enumerate(tobacco_stems)}
+    base_tail = len(tobacco_stems)
+    for stem, meta in MERCH_PRODUCTS.items():
+        if stem in pack_stems:
+            tail = int(meta.get("sort_tail", merch_count + 1))
+            stem_order[stem] = base_tail + tail
+
     for code in sorted(active_codes, key=lambda c: name_by_code[c].lower()):
         name = name_by_code[code]
+        merch = MERCH_PRODUCTS.get(name)
         if code in product_by_code:
             p = product_by_code[code]
             # При активации убедимся, что quantity > 0.
             p.sort_order = stem_order.get(name, 0)
-            if p.price is None:
-                p.price = default_price
+            if merch and isinstance(merch.get("price"), (int, float)):
+                p.price = float(merch["price"])
+            else:
+                p.price = TOBACCO_PRICE
             s = stock_by_pid.get(p.id)
             if s is None:
                 s = Stock(
@@ -433,7 +512,7 @@ def _sync_products_with_pack_images(db: Session) -> None:
         p = Product(
             name=name,
             code=code,
-            price=default_price,
+            price=float(merch["price"]) if merch and isinstance(merch.get("price"), (int, float)) else default_price,
             sort_order=stem_order.get(name, 0),
             is_active=True,
         )
@@ -712,41 +791,41 @@ def init_db():
         }
         sample_products = [
             # базовые вкусы, которые уже были
-            {"name": "Sunrise", "code": "sunrise", "price": 500.0, "quantity": 50},
+            {"name": "Sunrise", "code": "sunrise", "price": TOBACCO_PRICE, "quantity": 50},
             {
                 "name": "Orange Soda",
                 "code": "orange-soda",
-                "price": 500.0,
+                "price": TOBACCO_PRICE,
                 "quantity": 40,
             },
             {
                 "name": "Wintergreen",
                 "code": "wintergreen",
-                "price": 500.0,
+                "price": TOBACCO_PRICE,
                 "quantity": 30,
             },
             {
                 "name": "Eric's Mango",
                 "code": "erics-mango",
-                "price": 500.0,
+                "price": TOBACCO_PRICE,
                 "quantity": 20,
             },
             {
                 "name": "Cool Strawberry N",
                 "code": "cool-strawberry-n",
-                "price": 500.0,
+                "price": TOBACCO_PRICE,
                 "quantity": 25,
             },
             {
                 "name": "Double Orange",
                 "code": "double-orange",
-                "price": 500.0,
+                "price": TOBACCO_PRICE,
                 "quantity": 25,
             },
             {
                 "name": "Cucumber Lavender",
                 "code": "cucumber-lavender",
-                "price": 500.0,
+                "price": TOBACCO_PRICE,
                 "quantity": 20,
             },
             {
@@ -1094,6 +1173,8 @@ def list_products(db: Session = Depends(get_db)):
         if code_key in {"pay-qr"} or name_key in {"pay_qr"}:
             continue
 
+        merch_meta = MERCH_PRODUCTS.get(product.name)
+
         desc = get_flavor_description(product.name)
         tng_info = _get_tng_info_for_stem(product.name)
         display_name_en = tng_info.get("display_name_en") or product.name
@@ -1110,13 +1191,17 @@ def list_products(db: Session = Depends(get_db)):
         csv_desc = tng_info.get("description") or ""
         # Если в CSV есть описание — используем его (это и есть "фулл список").
         final_desc = csv_desc.strip() or desc
+
+        if merch_meta:
+            display_name_en = str(merch_meta.get("display_name") or product.name)
+            final_desc = str(merch_meta.get("description") or final_desc or "")
         result.append(
             ProductOut(
                 id=product.id,
                 name=product.name,
                 display_name_en=display_name_en,
                 code=product.code,
-                price=product.price,
+                price=float(merch_meta["price"]) if merch_meta and isinstance(merch_meta.get("price"), (int, float)) else product.price,
                 quantity=stock.quantity,
                 in_stock=stock.quantity > 0,
                 description=final_desc,
@@ -1157,6 +1242,8 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
                 raise HTTPException(status_code=400, detail="Session not found")
 
             product_ids = [item.product_id for item in payload.items]
+            if payload.gift_product_id is not None:
+                product_ids.append(int(payload.gift_product_id))
             products = (
                 db.query(Product, Stock)
                 .join(Stock, Stock.product_id == Product.id)
@@ -1180,6 +1267,25 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
                         status_code=400,
                         detail=f"Not enough stock for product {item.product_id}",
                     )
+
+            gift_product_id = int(payload.gift_product_id) if payload.gift_product_id is not None else None
+            if gift_product_id is not None:
+                if gift_product_id not in products_map:
+                    raise HTTPException(status_code=400, detail="Gift product not found")
+                gift_product, gift_stock = products_map[gift_product_id]
+                gift_code = (gift_product.code or "").lower()
+                if not gift_code.startswith("merch-dakimakura"):
+                    raise HTTPException(status_code=400, detail="Gift product must be a pillow")
+                tobacco_qty = 0
+                for item in payload.items:
+                    p, _ = products_map[item.product_id]
+                    code = (p.code or "").lower()
+                    if not code.startswith("merch-"):
+                        tobacco_qty += int(item.quantity or 0)
+                if tobacco_qty < 10:
+                    raise HTTPException(status_code=400, detail="Gift requires at least 10 tobacco packs")
+                if gift_stock.quantity < 1:
+                    raise HTTPException(status_code=400, detail="Gift is out of stock")
 
             payment_method = str(payload.payment_method or "cash").strip().lower()
             if payment_method not in {"cash", "qr"}:
@@ -1212,6 +1318,19 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
                 order_items.append(order_item)
                 stock.quantity -= item.quantity
                 db.add(stock)
+
+            if gift_product_id is not None:
+                gift_product, gift_stock = products_map[gift_product_id]
+                gift_item = OrderItem(
+                    order_id=order.id,
+                    product_id=gift_product.id,
+                    quantity=1,
+                    unit_price=0.0,
+                    line_amount=0.0,
+                )
+                order_items.append(gift_item)
+                gift_stock.quantity -= 1
+                db.add(gift_stock)
 
             order.total_amount = total_amount
             db.add_all(order_items)

@@ -48,8 +48,10 @@ function renderOrders(orders) {
     });
     const itemsHtml = order.items
       .map(
-        (i) =>
-          `<li>${i.product_name}: <strong>${i.quantity}</strong> шт.</li>`
+        (i) => {
+          const giftBadge = Number(i.unit_price || 0) === 0 ? " 🎁 подарок" : "";
+          return `<li>${i.product_name}${giftBadge}: <strong>${i.quantity}</strong> шт.</li>`;
+        }
       )
       .join("");
 

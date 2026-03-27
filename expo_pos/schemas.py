@@ -34,6 +34,7 @@ class OrderCreate(BaseModel):
     items: List[OrderItemCreate]
     session_id: Optional[int] = None
     payment_method: Optional[str] = "cash"
+    gift_product_id: Optional[int] = None
 
 
 class OrderItemOut(BaseModel):

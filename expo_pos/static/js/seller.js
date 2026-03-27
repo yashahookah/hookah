@@ -786,6 +786,29 @@ function addToCart(productId, delta) {
   renderCart();
 }
 
+function getGiftContext() {
+  let tobaccoQty = 0;
+  Object.entries(state.cart).forEach(([idStr, qty]) => {
+    const id = parseInt(idStr, 10);
+    const product = state.products.find((p) => p.id === id);
+    if (!product) return;
+    const code = String(product.code || "").toLowerCase();
+    if (!code.startsWith("merch-")) {
+      tobaccoQty += Number(qty || 0);
+    }
+  });
+
+  const giftProduct = state.products.find((p) => {
+    const code = String(p.code || "").toLowerCase();
+    const inStock =
+      typeof p.in_stock === "boolean" ? p.in_stock : Number(p.quantity || 0) > 0;
+    return code.startsWith("merch-dakimakura") && inStock && Number(p.quantity || 0) > 0;
+  });
+
+  const eligible = tobaccoQty >= 10 && !!giftProduct;
+  return { eligible, tobaccoQty, giftProduct };
+}
+
 function renderCart() {
   const itemsEl = document.getElementById("cart-items");
   const emptyEl = document.getElementById("cart-empty");
@@ -814,6 +837,7 @@ function renderCart() {
   emptyEl.style.display = "none";
   let total = 0;
   let totalQty = 0;
+  const giftCtx = getGiftContext();
 
   entries.forEach(([idStr, qty]) => {
     const id = parseInt(idStr, 10);
@@ -835,6 +859,20 @@ function renderCart() {
     `;
     itemsEl.appendChild(li);
   });
+
+  if (giftCtx.eligible && giftCtx.giftProduct) {
+    const gift = giftCtx.giftProduct;
+    const li = document.createElement("li");
+    li.className = "cart-item";
+    li.innerHTML = `
+      <div>
+        <div class="cart-item__name">${canonicalDisplayNameEn(gift)} 🎁</div>
+        <div class="cart-item__meta">1 × 0 ₽ (подарок за 10 пачек)</div>
+      </div>
+      <div>0 ₽</div>
+    `;
+    itemsEl.appendChild(li);
+  }
 
   totalEl.textContent = `${total.toFixed(0)} ₽`;
   submitBtn.disabled = false;
@@ -878,6 +916,9 @@ async function submitOrder() {
     selectedPayment && String(selectedPayment.value || "").toLowerCase() === "qr"
       ? "qr"
       : "cash";
+  const giftCtx = getGiftContext();
+  const gift_product_id =
+    giftCtx.eligible && giftCtx.giftProduct ? giftCtx.giftProduct.id : null;
 
   const msgEl = document.getElementById("cart-message");
   const btn = document.getElementById("submit-order");
@@ -891,7 +932,7 @@ async function submitOrder() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ items, payment_method }),
+      body: JSON.stringify({ items, payment_method, gift_product_id }),
     });
 
     if (!res.ok) {

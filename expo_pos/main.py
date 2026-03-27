@@ -1031,6 +1031,11 @@ def init_db():
 def ensure_order_payment_method_column():
     db = next(get_db())
     try:
+        table_exists = db.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'")
+        ).fetchone()
+        if not table_exists:
+            return
         rows = db.execute(text("PRAGMA table_info(orders)")).fetchall()
         columns = {str(r[1]) for r in rows}
         if "payment_method" not in columns:
@@ -1047,8 +1052,8 @@ def ensure_order_payment_method_column():
 @app.on_event("startup")
 def on_startup():
     _load_tng_product_info()
-    ensure_order_payment_method_column()
     init_db()
+    ensure_order_payment_method_column()
 
 
 @app.get("/")

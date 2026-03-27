@@ -190,8 +190,8 @@ function kioskPlayAddToCartAnimation() {
   const slidesContainer = document.getElementById("kiosk-slides");
   if (!slidesContainer) return;
   const activeImg =
-    slidesContainer.querySelector(".kiosk-slide--active .kiosk-pack-img") ||
-    slidesContainer.querySelector(".kiosk-slide--pos0 .kiosk-pack-img");
+    slidesContainer.querySelector(".kiosk-slide--pos0 .kiosk-pack-img") ||
+    slidesContainer.querySelector(".kiosk-slide--active .kiosk-pack-img");
   if (!activeImg) return;
 
   const cartBar = document.getElementById("kiosk-bottom-bar");
@@ -237,10 +237,6 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
-let kioskRightLastChangeAt = 0;
-const KIOSK_RIGHT_WHEEL_THRESHOLD = 26;
-const KIOSK_RIGHT_TOUCH_STEP = 37;
-const KIOSK_RIGHT_CHANGE_COOLDOWN_MS = 160;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -345,11 +341,11 @@ function kioskRenderSlides() {
           if (Math.abs(delta) < 40) return;
           kioskChangeByDelta(delta > 0 ? 1 : -1);
         } else {
-          // правая половина — быстрая прокрутка
-          if (Math.abs(delta) < KIOSK_RIGHT_WHEEL_THRESHOLD) return;
+          // правая половина — как наше колесо (медленный, но отдельный скролл)
+          if (Math.abs(delta) < 40) return;
           const now = Date.now();
-          if (now - kioskRightLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
-          kioskRightLastChangeAt = now;
+          if (now - kioskHaloLastChangeAt < 400) return;
+          kioskHaloLastChangeAt = now;
           const direction = delta > 0 ? 1 : -1;
           kioskSetActiveIndex(kioskState.activeIndex + direction);
         }
@@ -383,11 +379,8 @@ function kioskRenderSlides() {
           return;
         }
         const diff = y - touchLastY;
-        const step = KIOSK_RIGHT_TOUCH_STEP; // правая половина — быстрая прокрутка
+        const step = 60; // правая половина — очень медленная прокрутка
         if (Math.abs(diff) < step) return;
-        const now = Date.now();
-        if (now - kioskRightLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
-        kioskRightLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         touchLastY = y;
@@ -487,35 +480,31 @@ function kioskUpdateActiveStack() {
   let activeIndex = kioskState.activeIndex;
   activeIndex = ((activeIndex % total) + total) % total;
 
-  slides.forEach((slide) => {
+  slides.forEach((slide, index) => {
     slide.className = "kiosk-slide";
     slide.style.pointerEvents = "none";
-  });
 
-  const activeSlide = slides[activeIndex];
-  if (activeSlide) {
-    activeSlide.classList.add("kiosk-slide--active");
-    activeSlide.style.pointerEvents = "auto";
+    // вычисляем позицию относительно активной с учётом «револьверного» круга
+    let delta = index - activeIndex;
+    const half = Math.floor(total / 2);
+    if (delta > half) delta -= total;
+    if (delta < -half) delta += total;
 
-    // Возвращаем прежнюю механику: одна пачка в центре + прилет сбоку.
-    // При листании "вперед" (delta > 0) прилетает слева.
-    if (!kioskState._bootRenderDone) {
-      kioskState._bootRenderDone = true;
+    if (delta === 0) {
+      slide.classList.add("kiosk-slide--pos0");
+      slide.style.pointerEvents = "auto";
+    } else if (delta === 1) {
+      slide.classList.add("kiosk-slide--pos1");
+    } else if (delta === 2) {
+      slide.classList.add("kiosk-slide--pos2");
+    } else if (delta === -1) {
+      slide.classList.add("kiosk-slide--pos-1");
+    } else if (delta === -2) {
+      slide.classList.add("kiosk-slide--pos-2");
     } else {
-      const dir = kioskState.lastDirection || 1;
-      const enterClass =
-        dir > 0 ? "kiosk-slide--enter-from-left" : "kiosk-slide--enter-from-right";
-      activeSlide.classList.add(enterClass);
-      activeSlide.addEventListener(
-        "animationend",
-        () => {
-          activeSlide.classList.remove("kiosk-slide--enter-from-left");
-          activeSlide.classList.remove("kiosk-slide--enter-from-right");
-        },
-        { once: true }
-      );
+      slide.classList.add("kiosk-slide--far");
     }
-  }
+  });
 
   kioskApplyAromaBackground();
   kioskUpdateAromaHalo();
@@ -645,9 +634,9 @@ function kioskUpdateAromaHalo() {
       "wheel",
       (e) => {
         e.preventDefault();
-        if (Math.abs(e.deltaY) < KIOSK_RIGHT_WHEEL_THRESHOLD) return;
+        if (Math.abs(e.deltaY) < 40) return;
         const now = Date.now();
-        if (now - kioskHaloLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
+        if (now - kioskHaloLastChangeAt < 400) return;
         kioskHaloLastChangeAt = now;
         const direction = e.deltaY > 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
@@ -675,11 +664,8 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = KIOSK_RIGHT_TOUCH_STEP; // halo справа — быстрая прокрутка
+        const step = 60; // правая половина — очень медленная прокрутка
         if (Math.abs(diff) < step) return;
-        const now = Date.now();
-        if (now - kioskHaloLastChangeAt < KIOSK_RIGHT_CHANGE_COOLDOWN_MS) return;
-        kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         lastY = y;
@@ -788,6 +774,14 @@ function kioskCloseCart() {
   }
 }
 
+function kioskGetSelectedPaymentMethod() {
+  const selected = document.querySelector(
+    'input[name="kiosk-payment-method"]:checked'
+  );
+  const value = selected ? String(selected.value || "").toLowerCase() : "cash";
+  return value === "qr" ? "qr" : "cash";
+}
+
 async function kioskSubmitOrder() {
   const entries = Object.entries(kioskState.cart);
   if (!entries.length) return;
@@ -814,6 +808,7 @@ async function kioskSubmitOrder() {
     product_id: parseInt(idStr, 10),
     quantity: qty,
   }));
+  const payment_method = kioskGetSelectedPaymentMethod();
 
   const msgEl = document.getElementById("kiosk-cart-message");
   const btn = document.getElementById("kiosk-submit-order");
@@ -827,7 +822,7 @@ async function kioskSubmitOrder() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, payment_method }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

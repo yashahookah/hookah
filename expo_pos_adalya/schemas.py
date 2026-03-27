@@ -3,7 +3,10 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from models import OrderStatus
+try:
+    from .models import OrderStatus
+except ImportError:  # pragma: no cover
+    from models import OrderStatus
 
 
 class ProductOut(BaseModel):
@@ -16,7 +19,7 @@ class ProductOut(BaseModel):
     description: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class OrderItemCreate(BaseModel):
@@ -27,6 +30,7 @@ class OrderItemCreate(BaseModel):
 class OrderCreate(BaseModel):
     items: List[OrderItemCreate]
     session_id: Optional[int] = None
+    payment_method: Optional[str] = "cash"
 
 
 class OrderItemOut(BaseModel):
@@ -40,6 +44,7 @@ class OrderItemOut(BaseModel):
 class OrderOut(BaseModel):
     id: int
     status: OrderStatus
+    payment_method: Optional[str] = "cash"
     total_amount: float
     created_at: datetime
     items: List[OrderItemOut]

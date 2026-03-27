@@ -26,6 +26,17 @@
                     <span>Итого:</span>
                     <span id="cart-total" class="cart-summary__total">0 ₽</span>
                 </div>
+                <div class="pay-method" id="seller-pay-method">
+                    <span class="pay-method__label">Оплата:</span>
+                    <label class="pay-method__option">
+                        <input type="radio" name="seller-payment-method" value="cash" checked />
+                        Наличные
+                    </label>
+                    <label class="pay-method__option">
+                        <input type="radio" name="seller-payment-method" value="qr" />
+                        QR
+                    </label>
+                </div>
                 <button id="submit-order" class="primary-btn" disabled>Создать заказ</button>
                 <div id="cart-message" class="cart-message"></div>
             </div>

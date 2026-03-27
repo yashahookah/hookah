@@ -658,6 +658,13 @@ async function submitOrder() {
     product_id: parseInt(idStr, 10),
     quantity: qty,
   }));
+  const selectedPayment = document.querySelector(
+    'input[name="seller-payment-method"]:checked'
+  );
+  const payment_method =
+    selectedPayment && String(selectedPayment.value || "").toLowerCase() === "qr"
+      ? "qr"
+      : "cash";
 
   const msgEl = document.getElementById("cart-message");
   const btn = document.getElementById("submit-order");
@@ -671,7 +678,7 @@ async function submitOrder() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, payment_method }),
     });
 
     if (!res.ok) {

@@ -719,6 +719,30 @@ body.view-seller-active .seller {
     color: #fecaca;
 }
 
+.pay-method {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #e5e7eb;
+}
+
+.pay-method__label {
+    color: #9ca3af;
+}
+
+.pay-method__option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pay-method--kiosk {
+    margin-bottom: 10px;
+}
+
 .picking__controls {
     display: flex;
     flex-wrap: wrap;
@@ -785,6 +809,11 @@ body.view-seller-active .seller {
     padding: 0;
     margin: 6px 0;
     font-size: 13px;
+}
+
+.order-payment {
+    font-size: 13px;
+    color: #cbd5e1;
 }
 
 .order-total {
@@ -1182,14 +1211,7 @@ body.kiosk-body-lock {
         opacity 0.35s ease-out;
 }
 
-/* Классический режим: одна пачка в центре */
-.kiosk-slide--active {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-    z-index: 3;
-}
-
-/* Стек пачек (legacy-классы, оставляем для совместимости) */
+/* Стек пачек (как в Original) */
 .kiosk-slide--pos0 {
     transform: translate(-50%, -50%) translateZ(0) scale(1.04);
     opacity: 1;

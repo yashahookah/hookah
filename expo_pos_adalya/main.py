@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 # Поддерживаем оба режима запуска:
@@ -193,9 +193,31 @@ def init_db():
         db.close()
 
 
+def ensure_order_payment_method_column():
+    db = next(get_db())
+    try:
+        table_exists = db.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'")
+        ).fetchone()
+        if not table_exists:
+            return
+        rows = db.execute(text("PRAGMA table_info(orders)")).fetchall()
+        columns = {str(r[1]) for r in rows}
+        if "payment_method" not in columns:
+            db.execute(
+                text(
+                    "ALTER TABLE orders ADD COLUMN payment_method VARCHAR DEFAULT 'cash'"
+                )
+            )
+            db.commit()
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 def on_startup():
     init_db()
+    ensure_order_payment_method_column()
 
 
 @app.get("/")
@@ -290,9 +312,14 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
                 detail=f"Not enough stock for product {item.product_id}",
             )
 
+    payment_method = str(payload.payment_method or "cash").strip().lower()
+    if payment_method not in {"cash", "qr"}:
+        payment_method = "cash"
+
     order = Order(
         session_id=session.id,
         status=OrderStatus.NEW.value,
+        payment_method=payment_method,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )
@@ -386,6 +413,7 @@ def _order_to_out(order: Order) -> OrderOut:
     return OrderOut(
         id=order.id,
         status=OrderStatus(order.status),
+        payment_method=(order.payment_method or "cash"),
         total_amount=order.total_amount,
         created_at=order.created_at,
         items=items,

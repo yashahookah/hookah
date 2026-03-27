@@ -516,6 +516,10 @@ body.view-seller-active .seller {
     font-size: 15px;
 }
 
+.product-card__name-en--merch {
+    font-size: 18px;
+}
+
 .product-card__name-ru {
     font-size: 13px;
     font-weight: 500;
@@ -1477,6 +1481,10 @@ body.kiosk-body-lock {
         0 0 0 1px rgba(15, 23, 42, 0.85);
     transform: translateY(-4px);
     opacity: 0.99;
+}
+
+.kiosk-pack-img--no-clip {
+    clip-path: inset(3% 3% 3% 3% round 12px);
 }
 
 /* Фон/аура вокруг пачки для конкретных ароматов — не перекрывает упаковку */
@@ -2476,6 +2484,32 @@ body.kiosk-body-lock {
     color: #9ca3af;
 }
 
+.kiosk-cart-item-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.kiosk-cart-qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    background: rgba(15, 23, 42, 0.8);
+    color: #f8fafc;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0;
+}
+
+.kiosk-cart-qty-value {
+    min-width: 18px;
+    text-align: center;
+    color: #e5e7eb;
+    font-size: 13px;
+}
+
 .kiosk-cart-item-amount {
     font-size: 14px;
 }
@@ -2509,6 +2543,22 @@ body.kiosk-body-lock {
     color: #052e16;
     font-weight: 600;
     font-size: 15px;
+}
+
+.kiosk-cart-clear {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: rgba(15, 23, 42, 0.9);
+    color: #e5e7eb;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.kiosk-cart-clear:disabled {
+    opacity: 0.4;
 }
 
 .kiosk-cart-submit:disabled {

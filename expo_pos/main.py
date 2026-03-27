@@ -49,41 +49,95 @@ _STATIC_IMG_DIR = BASE_DIR / "static" / "img"
 _STATIC_IMG_FILES_LOWER: set[str] | None = None
 
 TOBACCO_PRICE = 2900.0
+MERCH_PILLOW_QTY = 20
+MERCH_MOUTHPIECE_QTY = 10
+
+# Реальные остатки по пачкам (со скрина пользователя), ключ — `Product.code`.
+PACK_STOCK_BY_CODE: dict[str, int] = {
+    "passinfruit-lemonade": 10,
+    "2005-blueberry": 20,
+    "bacon": 15,
+    "basil-strawberry": 10,
+    "blackberry-lime": 10,
+    "blitzsturm": 20,
+    "blueberry-grapefruit": 10,
+    "cane-mint": 40,
+    "chai": 30,
+    "cilantro": 20,
+    "cool-strawberry-n": 20,
+    "cucumber-lavender": 5,
+    "double-orange": 5,
+    "erics-mango": 5,
+    "horchata": 10,
+    "its-like-that-one": 5,
+    "kashmir": 5,
+    "kashmir-apple": 5,
+    "kashmir-black": 5,
+    "kashmir-cherry": 10,
+    "kashmir-guajava": 10,
+    "kashmir-mango": 5,
+    "kashmir-peach": 20,
+    "mango-fling": 5,
+    "maraschino-cherry": 20,
+    "mimon": 10,
+    "mixed": 10,
+    "muerte": 10,
+    "ololiqui": 10,
+    "orange-soda": 20,
+    "papas-f": 10,
+    "papaya-sorbet": 20,
+    "peach-iced-tea": 20,
+    "pineapple": 20,
+    "pink-grapefruit": 20,
+    "rangoon-sunrise-n": 10,
+    "schnozzberry": 10,
+    "sour-watermelon": 10,
+    "static-starlight": 10,
+    "static-starlight-v2": 10,
+    "strawberry": 5,
+    "strawberry-lemonade": 5,
+    "sunrise": 10,
+    "sunset": 10,
+    "tropical-punch": 10,
+    "watermelon": 10,
+    "cookie-dough": 20,
+    "wintergreen": 10,
+}
 
 # Мерч-позиции (имена должны точно совпадать со stem файлов в static/img).
 MERCH_PRODUCTS: dict[str, dict[str, str | float | int]] = {
     "Дакимакура Kashmir Peach": {
         "code": "merch-dakimakura-kashmir-peach",
-        "display_name": "Подушка",
-        "description": "Название подушки Kashmir Peach",
+        "display_name": "Подушка - Kashmir Peach",
+        "description": "Подушка Kashmir Peach",
         "price": 5000.0,
         "sort_tail": 1,
     },
     "Дакимакура Танж Cane mint": {
         "code": "merch-dakimakura-cane-mint",
-        "display_name": "Подушка",
-        "description": "Название подушки Cane mint",
+        "display_name": "Подушка - Cane mint",
+        "description": "Подушка Cane mint",
         "price": 5000.0,
         "sort_tail": 2,
     },
     "Дакимакура Танж Maraschino Cherry": {
         "code": "merch-dakimakura-maraschino-cherry",
-        "display_name": "Подушка",
-        "description": "Название подушки Maraschino Cherry",
+        "display_name": "Подушка - Maraschino Cherry",
+        "description": "Подушка Maraschino Cherry",
         "price": 5000.0,
         "sort_tail": 3,
     },
     "Дакимакура Танж Ololiui": {
         "code": "merch-dakimakura-ololiui",
-        "display_name": "Подушка",
-        "description": "Название подушки Ololiui",
+        "display_name": "Подушка - Ololiuqui",
+        "description": "Подушка Ololiuqui",
         "price": 5000.0,
         "sort_tail": 4,
     },
     "Дакимакура Танж Papaya Sorbet": {
         "code": "merch-dakimakura-papaya-sorbet",
-        "display_name": "Подушка",
-        "description": "Название подушки Papaya Sorbet",
+        "display_name": "Подушка - Papaya Sorbet",
+        "description": "Подушка Papaya Sorbet",
         "price": 5000.0,
         "sort_tail": 5,
     },
@@ -532,6 +586,39 @@ def _sync_products_with_pack_images(db: Session) -> None:
             if s.quantity <= 0:
                 s.quantity = default_qty
         db.flush()
+
+
+def _apply_real_stock_targets(db: Session) -> None:
+    """
+    Принудительно выставляет актуальные остатки:
+    - пачки по `PACK_STOCK_BY_CODE`
+    - подушки: 20
+    - мундштук: 10
+    """
+    products = db.query(Product).all()
+    stocks = db.query(Stock).all()
+    stock_by_pid = {s.product_id: s for s in stocks}
+
+    for p in products:
+        if not p or not p.id:
+            continue
+        stock = stock_by_pid.get(p.id)
+        if stock is None:
+            stock = Stock(product_id=p.id, quantity=0, min_threshold=5)
+            db.add(stock)
+
+        code = str(p.code or "").strip().lower()
+        target_qty: int | None = None
+
+        if code in PACK_STOCK_BY_CODE:
+            target_qty = int(PACK_STOCK_BY_CODE[code])
+        elif code.startswith("merch-dakimakura-"):
+            target_qty = MERCH_PILLOW_QTY
+        elif code == "merch-mouthpiece-noxpipe-x-tangiers":
+            target_qty = MERCH_MOUTHPIECE_QTY
+
+        if target_qty is not None:
+            stock.quantity = max(0, int(target_qty))
 
 
 # Описания ароматов из Flavors ALL TANGIERS
@@ -1090,6 +1177,7 @@ def init_db():
         # Приводим набор товаров к тому, что реально есть в `static/img`.
         # Это убирает "старые" ароматы и добавляет "новые" упаковки.
         _sync_products_with_pack_images(db)
+        _apply_real_stock_targets(db)
 
         active_session = (
             db.query(DbSession).filter(DbSession.is_active.is_(True)).first()
@@ -1195,6 +1283,15 @@ def list_products(db: Session = Depends(get_db)):
         if merch_meta:
             display_name_en = str(merch_meta.get("display_name") or product.name)
             final_desc = str(merch_meta.get("description") or final_desc or "")
+        elif code_key.startswith("merch-dakimakura"):
+            # Страховка на случай старых/рассинхронизированных данных в БД:
+            # в витрине всегда показываем "Подушка - ..." и корректное описание.
+            suffix = re.sub(r"^дакимакура\s*(танж|tangiers)?\s*", "", product.name, flags=re.I).strip()
+            display_name_en = f"Подушка - {suffix}" if suffix else "Подушка"
+            final_desc = f"Подушка {suffix}".strip()
+        elif code_key.startswith("merch-mouthpiece"):
+            display_name_en = "Мундштук"
+            final_desc = "NoxPipe x Tangiers"
         result.append(
             ProductOut(
                 id=product.id,

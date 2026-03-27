@@ -30,6 +30,7 @@ class OrderItemCreate(BaseModel):
 class OrderCreate(BaseModel):
     items: List[OrderItemCreate]
     session_id: Optional[int] = None
+    payment_method: Optional[str] = "cash"
 
 
 class OrderItemOut(BaseModel):
@@ -43,6 +44,7 @@ class OrderItemOut(BaseModel):
 class OrderOut(BaseModel):
     id: int
     status: OrderStatus
+    payment_method: Optional[str] = "cash"
     total_amount: float
     created_at: datetime
     items: List[OrderItemOut]

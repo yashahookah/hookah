@@ -468,6 +468,33 @@ const kioskLabelColorByBg = {
   "kiosk-bg--gastronomic": "#fefce8",
 };
 
+const KIOSK_MERCH_META = {
+  "merch-dakimakura-kashmir-peach": {
+    title: "Подушка - Kashmir Peach",
+    description: "Подушка Kashmir Peach",
+  },
+  "merch-dakimakura-cane-mint": {
+    title: "Подушка - Cane mint",
+    description: "Подушка Cane mint",
+  },
+  "merch-dakimakura-maraschino-cherry": {
+    title: "Подушка - Maraschino Cherry",
+    description: "Подушка Maraschino Cherry",
+  },
+  "merch-dakimakura-ololiui": {
+    title: "Подушка - Ololiuqui",
+    description: "Подушка Ololiuqui",
+  },
+  "merch-dakimakura-papaya-sorbet": {
+    title: "Подушка - Papaya Sorbet",
+    description: "Подушка Papaya Sorbet",
+  },
+  "merch-mouthpiece-noxpipe-x-tangiers": {
+    title: "Мундштук",
+    description: "NoxPipe x Tangiers",
+  },
+};
+
 function kioskPlayAddToCartAnimation() {
   const slidesContainer = document.getElementById("kiosk-slides");
   if (!slidesContainer) return;
@@ -624,7 +651,12 @@ function kioskRenderSlides() {
   kioskState.products.forEach((p) => {
     const slide = document.createElement("section");
     slide.className = "kiosk-slide";
-    const aromaMeta = kioskGetMetaForProduct(p);
+    const code = String((p && p.code) || "").toLowerCase();
+    const noClipClass = code.startsWith("merch-mouthpiece")
+      ? " kiosk-pack-img--no-clip"
+      : "";
+    const merchMeta = KIOSK_MERCH_META[code] || null;
+    const aromaMeta = merchMeta ? null : kioskGetMetaForProduct(p);
     if (aromaMeta) {
       slide.classList.add("kiosk-aroma");
       if (aromaMeta.themeClass) slide.classList.add(aromaMeta.themeClass);
@@ -635,20 +667,22 @@ function kioskRenderSlides() {
 
     const bgClass = aromaMeta && aromaMeta.bgClass ? aromaMeta.bgClass : "kiosk-bg--berry-deep";
     const cats = kioskCategoriesByBg[bgClass] || ["Сладкий"];
-    const catsHtml = cats
-      .map((c) => `<span class="kiosk-desc-tag">${kioskEscape(c)}</span>`)
-      .join("");
+    const catsHtml = merchMeta
+      ? ""
+      : cats.map((c) => `<span class="kiosk-desc-tag">${kioskEscape(c)}</span>`).join("");
     let textColor =
       bgClass === "kiosk-bg--mixed-fruit" || bgClass === "kiosk-bg--nectarine"
         ? "#0f172a"
         : kioskLabelColorByBg[bgClass] || "#f8fafc";
-    const desc = ((p.description || "").trim() || kioskFallbackDescription(p.name)).trim();
+    const desc = merchMeta
+      ? String(merchMeta.description || "").trim()
+      : ((p.description || "").trim() || kioskFallbackDescription(p.name)).trim();
 
     slide.innerHTML = `
       <div class="kiosk-slide-inner">
         <div class="kiosk-slide-caption" style="color:${textColor}">
           <div class="kiosk-slide-caption__name">${kioskEscape(
-            kioskCanonicalDisplayNameEn(p)
+            merchMeta ? merchMeta.title : kioskCanonicalDisplayNameEn(p)
           )}</div>
           ${desc ? `<div class="kiosk-slide-caption__desc">${kioskEscape(desc)}</div>` : ""}
           ${catsHtml ? `<div class="kiosk-desc-tags kiosk-slide-caption__tags">${catsHtml}</div>` : ""}
@@ -656,7 +690,7 @@ function kioskRenderSlides() {
 
         <div class="kiosk-slide-main">
           <div class="kiosk-pack-visual">
-            <img class="kiosk-pack-img" src="${initialSrc}" alt="${(p.name || "").replace(/"/g, "&quot;")}" />
+            <img class="kiosk-pack-img${noClipClass}" src="${initialSrc}" alt="${(p.name || "").replace(/"/g, "&quot;")}" />
           </div>
         </div>
       </div>
@@ -1080,6 +1114,7 @@ function kioskRenderCart() {
   const emptyEl = document.getElementById("kiosk-cart-empty");
   const totalEl = document.getElementById("kiosk-cart-total");
   const submitBtn = document.getElementById("kiosk-submit-order");
+  const clearBtn = document.getElementById("kiosk-clear-cart");
 
   itemsEl.innerHTML = "";
 
@@ -1087,6 +1122,7 @@ function kioskRenderCart() {
   if (!entries.length) {
     emptyEl.style.display = "block";
     submitBtn.disabled = true;
+    if (clearBtn) clearBtn.disabled = true;
     totalEl.textContent = "0 ₽";
     return;
   }
@@ -1109,6 +1145,11 @@ function kioskRenderCart() {
         <div class="kiosk-cart-item-meta">${qty} × ${product.price.toFixed(
           0
         )} ₽</div>
+        <div class="kiosk-cart-item-controls">
+          <button class="kiosk-cart-qty-btn" data-role="dec" data-id="${product.id}">-</button>
+          <span class="kiosk-cart-qty-value">${qty}</span>
+          <button class="kiosk-cart-qty-btn" data-role="inc" data-id="${product.id}">+</button>
+        </div>
       </div>
       <div class="kiosk-cart-item-amount">${lineAmount.toFixed(0)} ₽</div>
     `;
@@ -1131,6 +1172,7 @@ function kioskRenderCart() {
 
   totalEl.textContent = `${totalAmount.toFixed(0)} ₽`;
   submitBtn.disabled = false;
+  if (clearBtn) clearBtn.disabled = false;
 }
 
 function kioskOpenCart() {
@@ -1147,6 +1189,11 @@ function kioskCloseCart() {
   if (fab) {
     fab.classList.remove("kiosk-fab-global--hidden");
   }
+}
+
+function kioskClearCart() {
+  Object.keys(kioskState.cart).forEach((k) => delete kioskState.cart[k]);
+  kioskRenderSummary();
 }
 
 function kioskGetSelectedPaymentMethod() {
@@ -1310,6 +1357,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("kiosk-submit-order")
     .addEventListener("click", kioskSubmitOrder);
+  const clearBtn = document.getElementById("kiosk-clear-cart");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", kioskClearCart);
+  }
+  document.getElementById("kiosk-cart-items").addEventListener("click", (e) => {
+    const btn = e.target;
+    if (!btn || !btn.dataset || !btn.dataset.role) return;
+    const id = parseInt(btn.dataset.id, 10);
+    if (!Number.isFinite(id)) return;
+    if (btn.dataset.role === "inc") {
+      kioskChangeQty(id, 1);
+    } else if (btn.dataset.role === "dec") {
+      kioskChangeQty(id, -1);
+    }
+  });
 
   window.addEventListener("pos:view-change", (e) => {
     const viewName = e && e.detail ? String(e.detail) : "";

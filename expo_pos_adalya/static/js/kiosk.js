@@ -189,9 +189,9 @@ const KIOSK_DESCRIPTION_META = {
 function kioskPlayAddToCartAnimation() {
   const slidesContainer = document.getElementById("kiosk-slides");
   if (!slidesContainer) return;
-  const activeImg = slidesContainer.querySelector(
-    ".kiosk-slide--active .kiosk-pack-img"
-  );
+  const activeImg =
+    slidesContainer.querySelector(".kiosk-slide--active .kiosk-pack-img") ||
+    slidesContainer.querySelector(".kiosk-slide--pos0 .kiosk-pack-img");
   if (!activeImg) return;
 
   const cartBar = document.getElementById("kiosk-bottom-bar");
@@ -237,7 +237,7 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
-let kioskLastDeltaSign = 0;
+let kioskBootRenderDone = false;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -254,13 +254,10 @@ function kioskSetActiveIndex(nextIndex) {
 function kioskChangeByDelta(delta) {
   if (!kioskState.products.length) return;
   const now = Date.now();
-  const sign = delta > 0 ? 1 : -1;
-  // один жест пальца = максимум один шаг примерно раз в 360мс
-  if (now - kioskLastChangeAt < 360 && sign === kioskLastDeltaSign) return;
-
+  // защита от слишком быстрого пролистывания при жестах по центральной пачке
+  if (now - kioskLastChangeAt < 350) return;
   kioskLastChangeAt = now;
-  kioskLastDeltaSign = sign;
-  kioskSetActiveIndex(kioskState.activeIndex + sign);
+  kioskSetActiveIndex(kioskState.activeIndex + delta);
 }
 
 function kioskGetImageUrl(product) {
@@ -305,7 +302,10 @@ function kioskRenderSlides() {
     slide.className = "kiosk-slide";
     const aromaMeta = p.code ? kioskAromaMeta[p.code] : undefined;
     if (aromaMeta) {
-      slide.classList.add("kiosk-aroma", aromaMeta.themeClass);
+      slide.classList.add("kiosk-aroma");
+      if (aromaMeta.themeClass) {
+        slide.classList.add(aromaMeta.themeClass);
+      }
     }
     slide.innerHTML = `
       <div class="kiosk-slide-inner">
@@ -481,31 +481,33 @@ function kioskUpdateActiveStack() {
   let activeIndex = kioskState.activeIndex;
   activeIndex = ((activeIndex % total) + total) % total;
 
-  slides.forEach((slide, index) => {
+  slides.forEach((slide) => {
     slide.className = "kiosk-slide";
     slide.style.pointerEvents = "none";
-
-    // вычисляем позицию относительно активной с учётом «револьверного» круга
-    let delta = index - activeIndex;
-    const half = Math.floor(total / 2);
-    if (delta > half) delta -= total;
-    if (delta < -half) delta += total;
-
-    if (delta === 0) {
-      slide.classList.add("kiosk-slide--pos0");
-      slide.style.pointerEvents = "auto";
-    } else if (delta === 1) {
-      slide.classList.add("kiosk-slide--pos1");
-    } else if (delta === 2) {
-      slide.classList.add("kiosk-slide--pos2");
-    } else if (delta === -1) {
-      slide.classList.add("kiosk-slide--pos-1");
-    } else if (delta === -2) {
-      slide.classList.add("kiosk-slide--pos-2");
-    } else {
-      slide.classList.add("kiosk-slide--far");
-    }
   });
+
+  const activeSlide = slides[activeIndex];
+  if (activeSlide) {
+    activeSlide.classList.add("kiosk-slide--active");
+    activeSlide.style.pointerEvents = "auto";
+
+    if (!kioskBootRenderDone) {
+      kioskBootRenderDone = true;
+    } else {
+      const dir = kioskState.lastDirection || 1;
+      const enterClass =
+        dir > 0 ? "kiosk-slide--enter-from-left" : "kiosk-slide--enter-from-right";
+      activeSlide.classList.add(enterClass);
+      activeSlide.addEventListener(
+        "animationend",
+        () => {
+          activeSlide.classList.remove("kiosk-slide--enter-from-left");
+          activeSlide.classList.remove("kiosk-slide--enter-from-right");
+        },
+        { once: true }
+      );
+    }
+  }
 
   kioskApplyAromaBackground();
   kioskUpdateAromaHalo();
@@ -665,11 +667,8 @@ function kioskUpdateAromaHalo() {
           return;
         }
         const diff = y - lastY;
-        const step = 130; // колесу тоже даём чуть более живую реакцию
+        const step = 60; // правая половина — очень медленная прокрутка
         if (Math.abs(diff) < step) return;
-        const now = Date.now();
-        if (now - kioskHaloLastChangeAt < 550) return;
-        kioskHaloLastChangeAt = now;
         const direction = diff < 0 ? 1 : -1;
         kioskSetActiveIndex(kioskState.activeIndex + direction);
         lastY = y;
@@ -724,6 +723,7 @@ function kioskRenderCart() {
   const emptyEl = document.getElementById("kiosk-cart-empty");
   const totalEl = document.getElementById("kiosk-cart-total");
   const submitBtn = document.getElementById("kiosk-submit-order");
+  const clearBtn = document.getElementById("kiosk-clear-cart");
 
   itemsEl.innerHTML = "";
 
@@ -731,6 +731,7 @@ function kioskRenderCart() {
   if (!entries.length) {
     emptyEl.style.display = "block";
     submitBtn.disabled = true;
+    if (clearBtn) clearBtn.disabled = true;
     totalEl.textContent = "0 ₽";
     return;
   }
@@ -752,6 +753,11 @@ function kioskRenderCart() {
         <div class="kiosk-cart-item-meta">${qty} × ${product.price.toFixed(
           0
         )} ₽</div>
+        <div class="kiosk-cart-item-controls">
+          <button class="kiosk-cart-qty-btn" data-role="dec" data-id="${product.id}">-</button>
+          <span class="kiosk-cart-qty-value">${qty}</span>
+          <button class="kiosk-cart-qty-btn" data-role="inc" data-id="${product.id}">+</button>
+        </div>
       </div>
       <div class="kiosk-cart-item-amount">${lineAmount.toFixed(0)} ₽</div>
     `;
@@ -760,6 +766,7 @@ function kioskRenderCart() {
 
   totalEl.textContent = `${totalAmount.toFixed(0)} ₽`;
   submitBtn.disabled = false;
+  if (clearBtn) clearBtn.disabled = false;
 }
 
 function kioskOpenCart() {
@@ -776,6 +783,19 @@ function kioskCloseCart() {
   if (fab) {
     fab.classList.remove("kiosk-fab-global--hidden");
   }
+}
+
+function kioskClearCart() {
+  Object.keys(kioskState.cart).forEach((k) => delete kioskState.cart[k]);
+  kioskRenderSummary();
+}
+
+function kioskGetSelectedPaymentMethod() {
+  const selected = document.querySelector(
+    'input[name="kiosk-payment-method"]:checked'
+  );
+  const value = selected ? String(selected.value || "").toLowerCase() : "cash";
+  return value === "qr" ? "qr" : "cash";
 }
 
 async function kioskSubmitOrder() {
@@ -804,6 +824,7 @@ async function kioskSubmitOrder() {
     product_id: parseInt(idStr, 10),
     quantity: qty,
   }));
+  const payment_method = kioskGetSelectedPaymentMethod();
 
   const msgEl = document.getElementById("kiosk-cart-message");
   const btn = document.getElementById("kiosk-submit-order");
@@ -817,7 +838,7 @@ async function kioskSubmitOrder() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, payment_method }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -927,6 +948,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("kiosk-submit-order")
     .addEventListener("click", kioskSubmitOrder);
+  const clearBtn = document.getElementById("kiosk-clear-cart");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", kioskClearCart);
+  }
+  document.getElementById("kiosk-cart-items").addEventListener("click", (e) => {
+    const btn = e.target;
+    if (!btn || !btn.dataset || !btn.dataset.role) return;
+    const id = parseInt(btn.dataset.id, 10);
+    if (!Number.isFinite(id)) return;
+    if (btn.dataset.role === "inc") {
+      kioskChangeQty(id, 1);
+    } else if (btn.dataset.role === "dec") {
+      kioskChangeQty(id, -1);
+    }
+  });
 });
 
 

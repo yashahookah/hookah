@@ -144,6 +144,13 @@ function canonicalDisplayNameEn(product) {
   const code = normalizeTextForSearch(product && product.code);
   const name = normalizeTextForSearch(product && product.name);
   const disp = String((product && product.display_name_en) || "").trim();
+  if (code === "merch-dakimakura-kashmir-peach") return "Подушка - Kashmir Peach";
+  if (code === "merch-dakimakura-cane-mint") return "Подушка - Cane mint";
+  if (code === "merch-dakimakura-maraschino-cherry")
+    return "Подушка - Maraschino Cherry";
+  if (code === "merch-dakimakura-ololiui") return "Подушка - Ololiuqui";
+  if (code === "merch-dakimakura-papaya-sorbet") return "Подушка - Papaya Sorbet";
+  if (code === "merch-mouthpiece-noxpipe-x-tangiers") return "Мундштук";
   if (code === "cilantro" || code === "cilantro pineapple" || name === "cilantro") {
     return "Cilantro pineapple";
   }
@@ -623,13 +630,17 @@ function renderProducts() {
       const desc = bodyDesc ? bodyDesc : "";
       const card = document.createElement("div");
       card.className = "product-card";
+      const code = String(p.code || "").toLowerCase();
+      const isMerchPillow = code.startsWith("merch-dakimakura");
       const accentColor = getAccentColorForProduct(p);
       card.style.setProperty("--accent-color", accentColor);
       card.classList.add("product-card--accent");
       if (!isInStock) card.classList.add("product-card--out");
       card.innerHTML = `
         <div class="product-card__name">
-            <span class="product-card__name-en">${escapeHtml(
+            <span class="product-card__name-en ${
+              isMerchPillow ? "product-card__name-en--merch" : ""
+            }">${escapeHtml(
               canonicalDisplayNameEn(p)
             )}</span>
           ${
@@ -680,7 +691,10 @@ function sellerPlayAddToCartAnimation(product, cardEl) {
   const fly = document.createElement("div");
   fly.classList.add("kiosk-pack-fly");
   const img = document.createElement("img");
-  img.className = "kiosk-pack-img";
+  const code = String((product && product.code) || "").toLowerCase();
+  img.className = code.startsWith("merch-mouthpiece")
+    ? "kiosk-pack-img kiosk-pack-img--no-clip"
+    : "kiosk-pack-img";
   const candidates = sellerGetImageCandidates(product);
   img.src = (candidates && candidates[0]) || sellerGetImageUrl(product);
   img.alt = product.name || "";

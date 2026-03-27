@@ -190,8 +190,8 @@ function kioskPlayAddToCartAnimation() {
   const slidesContainer = document.getElementById("kiosk-slides");
   if (!slidesContainer) return;
   const activeImg =
-    slidesContainer.querySelector(".kiosk-slide--pos0 .kiosk-pack-img") ||
-    slidesContainer.querySelector(".kiosk-slide--active .kiosk-pack-img");
+    slidesContainer.querySelector(".kiosk-slide--active .kiosk-pack-img") ||
+    slidesContainer.querySelector(".kiosk-slide--pos0 .kiosk-pack-img");
   if (!activeImg) return;
 
   const cartBar = document.getElementById("kiosk-bottom-bar");
@@ -237,6 +237,7 @@ let kioskScrollInitialized = false;
 let kioskHaloScrollInitialized = false;
 let kioskLastChangeAt = 0;
 let kioskHaloLastChangeAt = 0;
+let kioskBootRenderDone = false;
 
 function kioskSetActiveIndex(nextIndex) {
   if (!kioskState.products.length) return;
@@ -480,31 +481,33 @@ function kioskUpdateActiveStack() {
   let activeIndex = kioskState.activeIndex;
   activeIndex = ((activeIndex % total) + total) % total;
 
-  slides.forEach((slide, index) => {
+  slides.forEach((slide) => {
     slide.className = "kiosk-slide";
     slide.style.pointerEvents = "none";
-
-    // вычисляем позицию относительно активной с учётом «револьверного» круга
-    let delta = index - activeIndex;
-    const half = Math.floor(total / 2);
-    if (delta > half) delta -= total;
-    if (delta < -half) delta += total;
-
-    if (delta === 0) {
-      slide.classList.add("kiosk-slide--pos0");
-      slide.style.pointerEvents = "auto";
-    } else if (delta === 1) {
-      slide.classList.add("kiosk-slide--pos1");
-    } else if (delta === 2) {
-      slide.classList.add("kiosk-slide--pos2");
-    } else if (delta === -1) {
-      slide.classList.add("kiosk-slide--pos-1");
-    } else if (delta === -2) {
-      slide.classList.add("kiosk-slide--pos-2");
-    } else {
-      slide.classList.add("kiosk-slide--far");
-    }
   });
+
+  const activeSlide = slides[activeIndex];
+  if (activeSlide) {
+    activeSlide.classList.add("kiosk-slide--active");
+    activeSlide.style.pointerEvents = "auto";
+
+    if (!kioskBootRenderDone) {
+      kioskBootRenderDone = true;
+    } else {
+      const dir = kioskState.lastDirection || 1;
+      const enterClass =
+        dir > 0 ? "kiosk-slide--enter-from-left" : "kiosk-slide--enter-from-right";
+      activeSlide.classList.add(enterClass);
+      activeSlide.addEventListener(
+        "animationend",
+        () => {
+          activeSlide.classList.remove("kiosk-slide--enter-from-left");
+          activeSlide.classList.remove("kiosk-slide--enter-from-right");
+        },
+        { once: true }
+      );
+    }
+  }
 
   kioskApplyAromaBackground();
   kioskUpdateAromaHalo();

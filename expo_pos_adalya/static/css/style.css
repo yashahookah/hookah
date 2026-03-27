@@ -1211,7 +1211,14 @@ body.kiosk-body-lock {
         opacity 0.35s ease-out;
 }
 
-/* Стек пачек (как в Original) */
+/* Классический режим: одна пачка в центре */
+.kiosk-slide--active {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    z-index: 3;
+}
+
+/* Стек пачек (legacy-классы, оставлены для совместимости) */
 .kiosk-slide--pos0 {
     transform: translate(-50%, -50%) translateZ(0) scale(1.04);
     opacity: 1;
@@ -1279,12 +1286,12 @@ body.kiosk-body-lock {
 }
 
 .kiosk-slide--enter-from-left {
-    animation: kioskSlideEnterFromLeft 2.2s cubic-bezier(0.16, 0.82, 0.22, 1) both;
+    animation: kioskSlideEnterFromLeft 0.55s cubic-bezier(0.19, 1, 0.22, 1) both;
     z-index: 3;
 }
 
 .kiosk-slide--enter-from-right {
-    animation: kioskSlideEnterFromRight 2.2s cubic-bezier(0.16, 0.82, 0.22, 1) both;
+    animation: kioskSlideEnterFromRight 0.55s cubic-bezier(0.19, 1, 0.22, 1) both;
     z-index: 3;
 }
 

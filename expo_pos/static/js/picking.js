@@ -6,6 +6,11 @@ const STATUS_LABELS = {
   canceled: "Отменён",
 };
 
+const PAYMENT_LABELS = {
+  cash: "Наличные",
+  qr: "QR",
+};
+
 function getSelectedStatuses() {
   return Array.from(document.querySelectorAll(".status-filter:checked")).map(
     (el) => el.value
@@ -60,6 +65,7 @@ function renderOrders(orders) {
       <ul class="order-items">
         ${itemsHtml}
       </ul>
+      <div class="order-payment">Оплата: ${PAYMENT_LABELS[order.payment_method] || "Наличные"}</div>
       <div class="order-total">Сумма: ${order.total_amount.toFixed(0)} ₽</div>
       <div class="order-actions">
         ${renderButtons(order)}

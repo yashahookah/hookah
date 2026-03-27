@@ -33,6 +33,17 @@
                     <span>Итого:</span>
                     <span id="kiosk-cart-total">0 ₽</span>
                 </div>
+                <div class="pay-method pay-method--kiosk" id="kiosk-pay-method">
+                    <span class="pay-method__label">Оплата:</span>
+                    <label class="pay-method__option">
+                        <input type="radio" name="kiosk-payment-method" value="cash" checked />
+                        Наличные
+                    </label>
+                    <label class="pay-method__option">
+                        <input type="radio" name="kiosk-payment-method" value="qr" />
+                        QR
+                    </label>
+                </div>
                 <button class="kiosk-cart-submit" id="kiosk-submit-order" disabled>Отправить на сборку</button>
                 <div class="kiosk-cart-message" id="kiosk-cart-message"></div>
             </div>

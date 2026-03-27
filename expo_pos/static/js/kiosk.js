@@ -1110,6 +1110,14 @@ function kioskCloseCart() {
   }
 }
 
+function kioskGetSelectedPaymentMethod() {
+  const selected = document.querySelector(
+    'input[name="kiosk-payment-method"]:checked'
+  );
+  const value = selected ? String(selected.value || "").toLowerCase() : "cash";
+  return value === "qr" ? "qr" : "cash";
+}
+
 async function kioskSubmitOrder() {
   const entries = Object.entries(kioskState.cart);
   if (!entries.length) return;
@@ -1136,6 +1144,7 @@ async function kioskSubmitOrder() {
     product_id: parseInt(idStr, 10),
     quantity: qty,
   }));
+  const payment_method = kioskGetSelectedPaymentMethod();
 
   const msgEl = document.getElementById("kiosk-cart-message");
   const btn = document.getElementById("kiosk-submit-order");
@@ -1149,7 +1158,7 @@ async function kioskSubmitOrder() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, payment_method }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

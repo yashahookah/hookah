@@ -69,6 +69,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
     status = Column(String, default=OrderStatus.NEW.value, index=True)
+    payment_method = Column(String, default="cash")
     total_amount = Column(Float, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)

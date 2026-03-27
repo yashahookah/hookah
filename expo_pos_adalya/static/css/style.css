@@ -719,30 +719,6 @@ body.view-seller-active .seller {
     color: #fecaca;
 }
 
-.pay-method {
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    color: #e5e7eb;
-}
-
-.pay-method__label {
-    color: #9ca3af;
-}
-
-.pay-method__option {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.pay-method--kiosk {
-    margin-bottom: 10px;
-}
-
 .picking__controls {
     display: flex;
     flex-wrap: wrap;
@@ -809,11 +785,6 @@ body.view-seller-active .seller {
     padding: 0;
     margin: 6px 0;
     font-size: 13px;
-}
-
-.order-payment {
-    font-size: 13px;
-    color: #cbd5e1;
 }
 
 .order-total {
@@ -1218,7 +1189,7 @@ body.kiosk-body-lock {
     z-index: 3;
 }
 
-/* Стек пачек (legacy-классы, оставлены для совместимости) */
+/* Стек пачек (legacy-классы, оставляем для совместимости) */
 .kiosk-slide--pos0 {
     transform: translate(-50%, -50%) translateZ(0) scale(1.04);
     opacity: 1;
@@ -1286,12 +1257,12 @@ body.kiosk-body-lock {
 }
 
 .kiosk-slide--enter-from-left {
-    animation: kioskSlideEnterFromLeft 0.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+    animation: kioskSlideEnterFromLeft 0.72s cubic-bezier(0.19, 1, 0.22, 1) both;
     z-index: 3;
 }
 
 .kiosk-slide--enter-from-right {
-    animation: kioskSlideEnterFromRight 0.55s cubic-bezier(0.19, 1, 0.22, 1) both;
+    animation: kioskSlideEnterFromRight 0.72s cubic-bezier(0.19, 1, 0.22, 1) both;
     z-index: 3;
 }
 

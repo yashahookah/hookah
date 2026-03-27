@@ -719,6 +719,30 @@ body.view-seller-active .seller {
     color: #fecaca;
 }
 
+.pay-method {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #e5e7eb;
+}
+
+.pay-method__label {
+    color: #9ca3af;
+}
+
+.pay-method__option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pay-method--kiosk {
+    margin-bottom: 10px;
+}
+
 .picking__controls {
     display: flex;
     flex-wrap: wrap;
@@ -785,6 +809,11 @@ body.view-seller-active .seller {
     padding: 0;
     margin: 6px 0;
     font-size: 13px;
+}
+
+.order-payment {
+    font-size: 13px;
+    color: #cbd5e1;
 }
 
 .order-total {
@@ -1189,7 +1218,7 @@ body.kiosk-body-lock {
     z-index: 3;
 }
 
-/* Стек пачек (legacy-классы, оставляем для совместимости) */
+/* Стек пачек (legacy-классы, оставлены для совместимости) */
 .kiosk-slide--pos0 {
     transform: translate(-50%, -50%) translateZ(0) scale(1.04);
     opacity: 1;
@@ -2530,6 +2559,32 @@ body.kiosk-body-lock {
     color: #9ca3af;
 }
 
+.kiosk-cart-item-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.kiosk-cart-qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    background: rgba(15, 23, 42, 0.8);
+    color: #f8fafc;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0;
+}
+
+.kiosk-cart-qty-value {
+    min-width: 18px;
+    text-align: center;
+    color: #e5e7eb;
+    font-size: 13px;
+}
+
 .kiosk-cart-item-amount {
     font-size: 14px;
 }
@@ -2563,6 +2618,22 @@ body.kiosk-body-lock {
     color: #052e16;
     font-weight: 600;
     font-size: 15px;
+}
+
+.kiosk-cart-clear {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: rgba(15, 23, 42, 0.9);
+    color: #e5e7eb;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.kiosk-cart-clear:disabled {
+    opacity: 0.4;
 }
 
 .kiosk-cart-submit:disabled {

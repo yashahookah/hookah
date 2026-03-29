@@ -49,9 +49,11 @@ _STATIC_IMG_DIR = BASE_DIR / "static" / "img"
 _STATIC_IMG_FILES_LOWER: set[str] | None = None
 
 TOBACCO_PRICE = 2900.0
+# Дакимакуры: остаток на каждый SKU подушки.
+MERCH_PILLOW_QTY = 10
 
 # Реальные остатки по пачкам Original (ключ — `Product.code`).
-# Любой SKU не из этого словаря после `_apply_real_stock_targets` получает 0 и снимается с витрины.
+# Прочие SKU не из этого словаря (кроме подушек и служебных): 0 и не в ассортименте.
 # Дубликаты кодов (разные исторические алиасы одного вкуса) задаём одним и тем же числом.
 PACK_STOCK_BY_CODE: dict[str, int] = {
     "2005-blueberry": 8,
@@ -588,8 +590,11 @@ def _sync_products_with_pack_images(db: Session) -> None:
 
 def _apply_real_stock_targets(db: Session) -> None:
     """
-    Принудительно выставляет остатки только по `PACK_STOCK_BY_CODE`.
-    Всё остальное (мерч, старые вкусы и т.д.): 0 и не в ассортименте. Исключение: служебный pay-qr.
+    Принудительно выставляет остатки:
+    - пачки Original по `PACK_STOCK_BY_CODE`
+    - подушки (merch-dakimakura-*): полный остаток, в ассортименте
+    - мундштук: нет в наличии, не в ассортименте
+    - прочее вне списков: 0 и не в ассортименте; служебный pay-qr не трогаем.
     """
     products = db.query(Product).all()
     stocks = db.query(Stock).all()
@@ -608,6 +613,12 @@ def _apply_real_stock_targets(db: Session) -> None:
         if code in PACK_STOCK_BY_CODE:
             stock.quantity = max(0, int(PACK_STOCK_BY_CODE[code]))
             p.is_active = True
+        elif code.startswith("merch-dakimakura-"):
+            stock.quantity = max(0, int(MERCH_PILLOW_QTY))
+            p.is_active = True
+        elif code == "merch-mouthpiece-noxpipe-x-tangiers":
+            stock.quantity = 0
+            p.is_active = False
         elif code in {"pay-qr"}:
             pass
         else:

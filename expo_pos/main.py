@@ -69,7 +69,6 @@ PACK_STOCK_BY_CODE: dict[str, int] = {
     "cucumber-lavender": 1,
     "double-orange": 4,
     "erics-mango": 1,
-    "its-like-that-one": 2,
     "its-like-that-one-breakfast-cereal": 2,
     "kashmir": 2,
     "kashmir-apple": 4,
@@ -591,7 +590,7 @@ def _sync_products_with_pack_images(db: Session) -> None:
 def _apply_real_stock_targets(db: Session) -> None:
     """
     Принудительно выставляет остатки:
-    - пачки Original по `PACK_STOCK_BY_CODE`
+    - пачки Original по `PACK_STOCK_BY_CODE` (если в `static/img` есть PNG — иначе 0 и не в витрине)
     - подушки (merch-dakimakura-*): полный остаток, в ассортименте
     - мундштук: нет в наличии, не в ассортименте
     - прочее вне списков: 0 и не в ассортименте; служебный pay-qr не трогаем.
@@ -599,6 +598,8 @@ def _apply_real_stock_targets(db: Session) -> None:
     products = db.query(Product).all()
     stocks = db.query(Stock).all()
     stock_by_pid = {s.product_id: s for s in stocks}
+    img_index = _load_static_img_files_index()
+    require_pack_image = bool(img_index)
 
     for p in products:
         if not p or not p.id:
@@ -611,8 +612,15 @@ def _apply_real_stock_targets(db: Session) -> None:
         code = str(p.code or "").strip().lower()
 
         if code in PACK_STOCK_BY_CODE:
-            stock.quantity = max(0, int(PACK_STOCK_BY_CODE[code]))
-            p.is_active = True
+            target = max(0, int(PACK_STOCK_BY_CODE[code]))
+            if require_pack_image and not _product_packaging_candidates_exist(
+                p.name, p.code
+            ):
+                stock.quantity = 0
+                p.is_active = False
+            else:
+                stock.quantity = target
+                p.is_active = True
         elif code.startswith("merch-dakimakura-"):
             stock.quantity = max(0, int(MERCH_PILLOW_QTY))
             p.is_active = True
@@ -1281,6 +1289,15 @@ def list_products(db: Session = Depends(get_db)):
             display_name_en = "Mixed Fruit"
         elif code_key in {"papas-f", "papas-foreplay"} or name_key in {"papa's f", "papas f"}:
             display_name_en = "Papa's Foreplay"
+        elif code_key in {
+            "its-like-that-one-breakfast-cereal",
+            "its-like-that-one",
+        } or (
+            "breakfast" in name_key
+            and "cereal" in name_key
+            and "like" in name_key
+        ):
+            display_name_en = "It's Like That One Breakfast Cereal"
         csv_desc = tng_info.get("description") or ""
         # Если в CSV есть описание — используем его (это и есть "фулл список").
         final_desc = csv_desc.strip() or desc

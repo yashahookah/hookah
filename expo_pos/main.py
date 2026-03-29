@@ -49,59 +49,57 @@ _STATIC_IMG_DIR = BASE_DIR / "static" / "img"
 _STATIC_IMG_FILES_LOWER: set[str] | None = None
 
 TOBACCO_PRICE = 2900.0
-MERCH_PILLOW_QTY = 20
-MERCH_MOUTHPIECE_QTY = 10
 
-# Реальные остатки по пачкам (со скрина пользователя), ключ — `Product.code`.
+# Реальные остатки по пачкам Original (ключ — `Product.code`).
+# Любой SKU не из этого словаря после `_apply_real_stock_targets` получает 0 и снимается с витрины.
+# Дубликаты кодов (разные исторические алиасы одного вкуса) задаём одним и тем же числом.
 PACK_STOCK_BY_CODE: dict[str, int] = {
-    "passinfruit-lemonade": 10,
-    "2005-blueberry": 20,
-    "bacon": 15,
-    "basil-strawberry": 10,
-    "blackberry-lime": 10,
-    "blitzsturm": 20,
-    "blueberry-grapefruit": 10,
-    "cane-mint": 40,
-    "chai": 30,
-    "cilantro": 20,
-    "cool-strawberry-n": 20,
-    "cucumber-lavender": 5,
-    "double-orange": 5,
-    "erics-mango": 5,
-    "horchata": 10,
-    "its-like-that-one": 5,
-    "kashmir": 5,
-    "kashmir-apple": 5,
+    "2005-blueberry": 8,
+    "bacon": 3,
+    "basil-strawberry": 7,
+    "blackberry-lime": 7,
+    "blitzsturm": 13,
+    "blueberry-grapefruit": 7,
+    "cane-mint": 10,
+    "chai": 8,
+    "cilantro": 8,
+    "cilantro-pineapple": 8,
+    "cucumber-lavender": 1,
+    "double-orange": 4,
+    "erics-mango": 1,
+    "its-like-that-one": 2,
+    "its-like-that-one-breakfast-cereal": 2,
+    "kashmir": 2,
+    "kashmir-apple": 4,
     "kashmir-black": 5,
-    "kashmir-cherry": 10,
-    "kashmir-guajava": 10,
-    "kashmir-mango": 5,
-    "kashmir-peach": 20,
-    "mango-fling": 5,
-    "maraschino-cherry": 20,
-    "mimon": 10,
-    "mixed": 10,
-    "muerte": 10,
-    "ololiqui": 10,
-    "orange-soda": 20,
-    "papas-f": 10,
-    "papaya-sorbet": 20,
-    "peach-iced-tea": 20,
-    "pineapple": 20,
-    "pink-grapefruit": 20,
-    "rangoon-sunrise-n": 10,
-    "schnozzberry": 10,
+    "kashmir-cherry": 2,
+    "kashmir-guajava": 9,
+    "kashmir-mango": 3,
+    "kashmir-peach": 2,
+    "mango-fling": 1,
+    "maraschino-cherry": 2,
+    "mimon": 7,
+    "mixed": 9,
+    "mixed-fruit": 9,
+    "muerte": 5,
+    "muerte-por-arroz": 5,
+    "orange-soda": 10,
+    "papas-f": 7,
+    "papas-foreplay": 7,
+    "passinfruit-lemonade": 6,
+    "passionfruit-lemonade": 6,
+    "peach-iced-tea": 13,
+    "pineapple": 8,
+    "pink-grapefruit": 16,
+    "rangoon-sunrise-n": 6,
+    "schnozzberry": 9,
     "sour-watermelon": 10,
-    "static-starlight": 10,
-    "static-starlight-v2": 10,
-    "strawberry": 5,
-    "strawberry-lemonade": 5,
-    "sunrise": 10,
-    "sunset": 10,
-    "tropical-punch": 10,
-    "watermelon": 10,
-    "cookie-dough": 20,
-    "wintergreen": 10,
+    "static-starlight": 6,
+    "strawberry-lemonade": 3,
+    "sunrise": 7,
+    "sunset": 8,
+    "tropical-punch": 7,
+    "wintergreen": 17,
 }
 
 # Мерч-позиции (имена должны точно совпадать со stem файлов в static/img).
@@ -590,10 +588,8 @@ def _sync_products_with_pack_images(db: Session) -> None:
 
 def _apply_real_stock_targets(db: Session) -> None:
     """
-    Принудительно выставляет актуальные остатки:
-    - пачки по `PACK_STOCK_BY_CODE`
-    - подушки: 20
-    - мундштук: 10
+    Принудительно выставляет остатки только по `PACK_STOCK_BY_CODE`.
+    Всё остальное (мерч, старые вкусы и т.д.): 0 и не в ассортименте. Исключение: служебный pay-qr.
     """
     products = db.query(Product).all()
     stocks = db.query(Stock).all()
@@ -608,17 +604,15 @@ def _apply_real_stock_targets(db: Session) -> None:
             db.add(stock)
 
         code = str(p.code or "").strip().lower()
-        target_qty: int | None = None
 
         if code in PACK_STOCK_BY_CODE:
-            target_qty = int(PACK_STOCK_BY_CODE[code])
-        elif code.startswith("merch-dakimakura-"):
-            target_qty = MERCH_PILLOW_QTY
-        elif code == "merch-mouthpiece-noxpipe-x-tangiers":
-            target_qty = MERCH_MOUTHPIECE_QTY
-
-        if target_qty is not None:
-            stock.quantity = max(0, int(target_qty))
+            stock.quantity = max(0, int(PACK_STOCK_BY_CODE[code]))
+            p.is_active = True
+        elif code in {"pay-qr"}:
+            pass
+        else:
+            stock.quantity = 0
+            p.is_active = False
 
 
 # Описания ароматов из Flavors ALL TANGIERS
